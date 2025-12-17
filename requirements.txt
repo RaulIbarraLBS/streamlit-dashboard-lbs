@@ -3,3 +3,4 @@ pandas
 google-cloud-bigquery
 plotly
 db-dtypes
+google-auth
