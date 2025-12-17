@@ -1,18 +1,8 @@
-# Streamlit y componentes
-streamlit>=1.28.0
+streamlit>=1.33.0  <-- IMPORTANTE: Versión mínima para usar st.popover
 streamlit-aggrid>=0.3.4
-streamlit-tags>=1.2.8
-
-# Procesamiento de datos
 pandas>=2.0.0
 numpy>=1.24.0
-
-# Visualización
 plotly>=5.17.0
-
-# BigQuery
 google-cloud-bigquery>=3.11.0
 google-auth>=2.23.0
-
-# Utilidades
 python-dateutil>=2.8.2

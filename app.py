@@ -92,38 +92,73 @@ st.markdown("""
         box-shadow: 0 2px 8px rgba(0,0,0,0.15) !important;
     }
     
-    /* Filtros multiselect */
+    /* Filtros multiselect - MÁS CLAROS */
     div[data-baseweb="select"] > div {
-        background-color: white !important;
-        border-radius: 24px !important;
+        background-color: #FFFFFF !important;
+        border-radius: 8px !important;
         border: 1px solid #d0d0d0 !important;
         min-height: 42px !important;
+        color: #333 !important;
     }
     
-    /* Ocultar chips */
+    /* Placeholder visible */
+    div[data-baseweb="select"] input::placeholder {
+        color: #666 !important;
+        opacity: 1 !important;
+    }
+    
+    /* Texto dentro del input */
+    div[data-baseweb="select"] input {
+        color: #333 !important;
+        background-color: white !important;
+    }
+    
+    /* Chips seleccionados - claros y legibles */
     div[data-baseweb="select"] span[data-baseweb="tag"] {
-        display: none !important;
+        background-color: #e3f2fd !important;
+        color: #1976d2 !important;
+        border: 1px solid #90caf9 !important;
+        border-radius: 16px !important;
+        padding: 4px 12px !important;
+        font-size: 13px !important;
     }
     
-    /* Dropdown */
+    /* Botón X en chips */
+    div[data-baseweb="select"] span[data-baseweb="tag"] svg {
+        fill: #1976d2 !important;
+    }
+    
+    /* Dropdown menu */
     ul[role="listbox"] {
         background-color: white !important;
         border: 1px solid #d0d0d0 !important;
         border-radius: 8px !important;
         box-shadow: 0 4px 12px rgba(0,0,0,0.1) !important;
+        padding: 8px 0 !important;
     }
     
     li[role="option"] {
         background-color: white !important;
         color: #333 !important;
+        padding: 10px 16px !important;
     }
     
     li[role="option"]:hover {
-        background-color: #f0f0f0 !important;
+        background-color: #f5f5f5 !important;
     }
     
     li[role="option"][aria-selected="true"] {
-        background-color: #e8f4f8 !important;
+        background-color: #e3f2fd !important;
+        color: #1976d2 !important;
+        font-weight: 500 !important;
+    }
+    
+    /* Checkmarks en opciones seleccionadas */
+    li[role="option"][aria-selected="true"]::before {
+        content: "✓ ";
+        margin-right: 8px;
+        color: #1976d2;
+        font-weight: bold;
     }
     
     /* Títulos */
@@ -174,6 +209,23 @@ st.markdown("""
         box-shadow: 0 2px 4px rgba(0,0,0,0.1) !important;
         overflow: hidden !important;
         background-color: white !important;
+    }
+    
+    /* Spinner de carga mejorado */
+    div[data-testid="stSpinner"] > div {
+        border-color: #1976d2 !important;
+    }
+    
+    div[data-testid="stSpinner"] {
+        text-align: center;
+        padding: 3rem;
+    }
+    
+    div[data-testid="stStatusWidget"] {
+        background-color: white !important;
+        padding: 2rem !important;
+        border-radius: 12px !important;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.1) !important;
     }
     
 </style>
@@ -237,7 +289,7 @@ def get_data():
         st.error(f"Error cargando datos: {e}")
         return pd.DataFrame()
 
-def get_actividades_reales(profesores: list, tipo_actividad: str):
+def get_actividades_reales(profesores: list, tipo_actividad: str, periodos: list = None):
     """Obtiene datos REALES de actividades de BigQuery"""
     try:
         client = get_bigquery_client()
@@ -247,6 +299,17 @@ def get_actividades_reales(profesores: list, tipo_actividad: str):
         # Convertir lista de profesores a formato SQL
         profesores_str = "', '".join(profesores)
         
+        # Construir filtro de fecha/periodo
+        if periodos and len(periodos) > 0:
+            # Si hay periodo(s) seleccionado(s), usar esos periodos completos
+            periodos_str = "', '".join(periodos)
+            periodo_filter = f"AND periodo IN ('{periodos_str}')"
+            date_filter = ""
+        else:
+            # Si no hay periodo, limitar a últimos 30 días
+            periodo_filter = ""
+            date_filter = "AND fecha_actividad >= DATE_SUB(CURRENT_DATE(), INTERVAL 30 DAY)"
+        
         query = f"""
         SELECT 
             fecha_actividad,
@@ -254,7 +317,8 @@ def get_actividades_reales(profesores: list, tipo_actividad: str):
         FROM `dashboard-app-lbs.dashboard_dataset.reporte_tareas_completo`
         WHERE profesor IN ('{profesores_str}')
             AND tipo_actividad = '{tipo_actividad}'
-            AND fecha_actividad >= DATE_SUB(CURRENT_DATE(), INTERVAL 30 DAY)
+            {date_filter}
+            {periodo_filter}
         GROUP BY fecha_actividad
         ORDER BY fecha_actividad
         """
@@ -317,8 +381,8 @@ def plot_gauge(value, title):
     )
     return fig
 
-def plot_activity_timeline(profesores: list, tipo_actividad: str = 'Tarea'):
-    """Crea gráfica de actividades con datos REALES"""
+def plot_activity_timeline(profesores: list, tipo_actividad: str = 'Tarea', periodos: list = None):
+    """Crea gráfica de BARRAS de actividades con datos REALES"""
     
     # Si no hay profesores, mostrar mensaje
     if not profesores:
@@ -340,13 +404,19 @@ def plot_activity_timeline(profesores: list, tipo_actividad: str = 'Tarea'):
         return fig
     
     # Obtener datos reales
-    df_actividades = get_actividades_reales(profesores, tipo_actividad)
+    df_actividades = get_actividades_reales(profesores, tipo_actividad, periodos)
     
     # Si no hay datos
     if df_actividades.empty:
         fig = go.Figure()
+        mensaje = f"No hay datos de {tipo_actividad}s"
+        if periodos and len(periodos) > 0:
+            mensaje += f" para el periodo seleccionado"
+        else:
+            mensaje += " en los últimos 30 días"
+            
         fig.add_annotation(
-            text=f"No hay datos de {tipo_actividad}s en los últimos 30 días",
+            text=mensaje,
             xref="paper", yref="paper",
             x=0.5, y=0.5, showarrow=False,
             font=dict(size=16, color="#999")
@@ -361,17 +431,14 @@ def plot_activity_timeline(profesores: list, tipo_actividad: str = 'Tarea'):
         )
         return fig
     
-    # Crear gráfica
+    # Crear gráfica DE BARRAS (MODIFICADO)
     fig = go.Figure()
-    fig.add_trace(go.Scatter(
+    fig.add_trace(go.Bar(
         x=df_actividades['fecha_actividad'],
         y=df_actividades['cantidad'],
-        mode='lines',
-        fill='tozeroy',
-        line=dict(color='#5F6B75', width=2),
-        fillcolor='rgba(95, 107, 117, 0.2)',
+        marker_color='#5F6B75', # Mismo color gris
         name='Actividades',
-        hovertemplate='<b>%{x}</b><br>Cantidad: %{y}<extra></extra>'
+        hovertemplate='<b>%{x|%d %b}</b><br>Cantidad: %{y}<extra></extra>'
     ))
     
     max_cantidad = df_actividades['cantidad'].max() if not df_actividades.empty else 10
@@ -386,7 +453,7 @@ def plot_activity_timeline(profesores: list, tipo_actividad: str = 'Tarea'):
             gridcolor='#f0f0f0',
             title='',
             tickformat='%d %b',
-            tickangle=0
+            tickangle=-45 # Inclinado para que las barras no se amontonen con las etiquetas
         ),
         yaxis=dict(
             showgrid=True,
@@ -426,12 +493,19 @@ for key in filter_keys:
 
 # ==================== CARGAR DATOS ====================
 
-with st.spinner("Cargando datos..."):
+with st.spinner("🔄 Cargando datos del dashboard..."):
     df = get_data()
 
 if df.empty:
     st.error("No se pudieron cargar los datos. Verifica la conexión a BigQuery.")
     st.stop()
+
+# Establecer periodo más reciente por defecto SOLO en primera carga
+if 'initialized' not in st.session_state:
+    periodos_disponibles = sorted(df['periodo'].unique(), reverse=True)
+    if periodos_disponibles:
+        st.session_state['filter_periodo'] = [periodos_disponibles[0]]
+    st.session_state['initialized'] = True
 
 # ==================== HEADER ====================
 
@@ -441,93 +515,155 @@ with col_title:
     st.markdown("<h1 style='margin-bottom: 0;'>Reporte de estadísticas de app LBS+</h1>", unsafe_allow_html=True)
 
 with col_clear:
-    if st.button("Borrar filtros", use_container_width=True, key="btn_clear"):
+    if st.button("Borrar filtros", width="stretch", key="btn_clear"):
         for key in filter_keys:
             st.session_state[key] = []
         st.rerun()
 
 st.markdown("<br>", unsafe_allow_html=True)
 
-# ==================== FILTROS ====================
+# ==================== FILTROS DINÁMICOS (CASCADA) ====================
 
+# 1. Definir qué columnas usa cada filtro para mapear
+# (Clave del session_state : Nombre real de la columna en el DataFrame)
+mapa_filtros = {
+    'filter_profesor': 'profesor',
+    'filter_campus': 'campus',
+    'filter_escolaridad': 'escolaridad',
+    'filter_grado': 'grado',
+    'filter_grupo': 'grupo',
+    'filter_materia': 'materia',
+    'filter_periodo': 'periodo'
+}
+
+# 2. Función para calcular opciones disponibles
+def obtener_opciones_validas(df_total, columna_objetivo, mapa_filtros):
+    """
+    Filtra el DF basándose en TODAS las selecciones actuales EXCEPTO
+    la de la columna que estamos calculando (para no restringirse a sí mismo).
+    """
+    df_temp = df_total.copy()
+    
+    for key, col in mapa_filtros.items():
+        # Si no es la columna actual Y hay algo seleccionado en ese filtro
+        if col != columna_objetivo and st.session_state[key]:
+            df_temp = df_temp[df_temp[col].isin(st.session_state[key])]
+            
+    lista_opciones = sorted(df_temp[columna_objetivo].unique())
+    return lista_opciones
+
+# 3. Renderizar Filtros con opciones inteligentes
 filter_cols = st.columns(7)
 
+# --- FILTRO PROFESOR ---
 with filter_cols[0]:
+    # Calculamos opciones válidas según lo que hayas elegido en Campus, Materia, etc.
+    opciones = obtener_opciones_validas(df, 'profesor', mapa_filtros)
+    
+    # TRUCO ANTIGUO ERROR: Asegurar que lo seleccionado siga en las opciones
+    # (Si filtras algo que excluye tu selección actual, la agregamos para que no truene)
+    seleccion_actual = st.session_state['filter_profesor']
+    opciones_finales = sorted(list(set(opciones + seleccion_actual)))
+    
     selected_profesor = st.multiselect(
-        "Profesor", 
-        df['profesor'].unique(), 
-        key='filter_profesor', 
+        "Profesor",
+        options=opciones_finales,
+        default=seleccion_actual,
         placeholder="Profesor",
-        default=st.session_state['filter_profesor']
+        label_visibility="collapsed",
+        key='filter_profesor'
     )
-    if len(selected_profesor) > 0:
-        st.markdown(f"<p style='color: #333; font-size: 13px; font-weight: 600; margin-top: -8px;'>✓ {len(selected_profesor)} seleccionado{'s' if len(selected_profesor) > 1 else ''}</p>", unsafe_allow_html=True)
-        
+
+# --- FILTRO CAMPUS ---
 with filter_cols[1]:
+    opciones = obtener_opciones_validas(df, 'campus', mapa_filtros)
+    seleccion_actual = st.session_state['filter_campus']
+    opciones_finales = sorted(list(set(opciones + seleccion_actual)))
+    
     selected_campus = st.multiselect(
-        "Campus", 
-        df['campus'].unique(), 
-        key='filter_campus', 
+        "Campus",
+        options=opciones_finales,
+        default=seleccion_actual,
         placeholder="Campus",
-        default=st.session_state['filter_campus']
+        label_visibility="collapsed",
+        key='filter_campus'
     )
-    if len(selected_campus) > 0:
-        st.markdown(f"<p style='color: #333; font-size: 13px; font-weight: 600; margin-top: -8px;'>✓ {len(selected_campus)} seleccionado{'s' if len(selected_campus) > 1 else ''}</p>", unsafe_allow_html=True)
-        
+
+# --- FILTRO ESCOLARIDAD ---
 with filter_cols[2]:
+    opciones = obtener_opciones_validas(df, 'escolaridad', mapa_filtros)
+    seleccion_actual = st.session_state['filter_escolaridad']
+    opciones_finales = sorted(list(set(opciones + seleccion_actual)))
+    
     selected_escolaridad = st.multiselect(
-        "Escolaridad", 
-        df['escolaridad'].unique(), 
-        key='filter_escolaridad', 
+        "Escolaridad",
+        options=opciones_finales,
+        default=seleccion_actual,
         placeholder="Escolaridad",
-        default=st.session_state['filter_escolaridad']
+        label_visibility="collapsed",
+        key='filter_escolaridad'
     )
-    if len(selected_escolaridad) > 0:
-        st.markdown(f"<p style='color: #333; font-size: 13px; font-weight: 600; margin-top: -8px;'>✓ {len(selected_escolaridad)} seleccionado{'s' if len(selected_escolaridad) > 1 else ''}</p>", unsafe_allow_html=True)
-        
+
+# --- FILTRO GRADO ---
 with filter_cols[3]:
+    opciones = obtener_opciones_validas(df, 'grado', mapa_filtros)
+    seleccion_actual = st.session_state['filter_grado']
+    opciones_finales = sorted(list(set(opciones + seleccion_actual)))
+    
     selected_grado = st.multiselect(
-        "Grado", 
-        df['grado'].unique(), 
-        key='filter_grado', 
+        "Grado",
+        options=opciones_finales,
+        default=seleccion_actual,
         placeholder="Grado",
-        default=st.session_state['filter_grado']
+        label_visibility="collapsed",
+        key='filter_grado'
     )
-    if len(selected_grado) > 0:
-        st.markdown(f"<p style='color: #333; font-size: 13px; font-weight: 600; margin-top: -8px;'>✓ {len(selected_grado)} seleccionado{'s' if len(selected_grado) > 1 else ''}</p>", unsafe_allow_html=True)
-        
+
+# --- FILTRO GRUPO ---
 with filter_cols[4]:
+    opciones = obtener_opciones_validas(df, 'grupo', mapa_filtros)
+    seleccion_actual = st.session_state['filter_grupo']
+    opciones_finales = sorted(list(set(opciones + seleccion_actual)))
+    
     selected_grupo = st.multiselect(
-        "Grupo", 
-        df['grupo'].unique(), 
-        key='filter_grupo', 
+        "Grupo",
+        options=opciones_finales,
+        default=seleccion_actual,
         placeholder="Grupo",
-        default=st.session_state['filter_grupo']
+        label_visibility="collapsed",
+        key='filter_grupo'
     )
-    if len(selected_grupo) > 0:
-        st.markdown(f"<p style='color: #333; font-size: 13px; font-weight: 600; margin-top: -8px;'>✓ {len(selected_grupo)} seleccionado{'s' if len(selected_grupo) > 1 else ''}</p>", unsafe_allow_html=True)
-        
+
+# --- FILTRO MATERIA ---
 with filter_cols[5]:
+    opciones = obtener_opciones_validas(df, 'materia', mapa_filtros)
+    seleccion_actual = st.session_state['filter_materia']
+    opciones_finales = sorted(list(set(opciones + seleccion_actual)))
+    
     selected_materia = st.multiselect(
-        "Materia", 
-        df['materia'].unique(), 
-        key='filter_materia', 
+        "Materia",
+        options=opciones_finales,
+        default=seleccion_actual,
         placeholder="Materia",
-        default=st.session_state['filter_materia']
+        label_visibility="collapsed",
+        key='filter_materia'
     )
-    if len(selected_materia) > 0:
-        st.markdown(f"<p style='color: #333; font-size: 13px; font-weight: 600; margin-top: -8px;'>✓ {len(selected_materia)} seleccionado{'s' if len(selected_materia) > 1 else ''}</p>", unsafe_allow_html=True)
-        
+
+# --- FILTRO PERIODO ---
 with filter_cols[6]:
+    # El periodo tiene un tratamiento especial para mantener el orden reverso (más nuevo arriba)
+    opciones = obtener_opciones_validas(df, 'periodo', mapa_filtros)
+    seleccion_actual = st.session_state.get('filter_periodo', [])
+    opciones_finales = sorted(list(set(opciones + seleccion_actual)), reverse=True)
+    
     selected_periodo = st.multiselect(
-        "Periodo: 2025-10", 
-        df['periodo'].unique(), 
-        key='filter_periodo', 
-        placeholder="Periodo: 2025-10",
-        default=st.session_state['filter_periodo']
+        "Periodo",
+        options=opciones_finales,
+        default=seleccion_actual,
+        placeholder="Periodo",
+        label_visibility="collapsed",
+        key='filter_periodo'
     )
-    if len(selected_periodo) > 0:
-        st.markdown(f"<p style='color: #333; font-size: 13px; font-weight: 600; margin-top: -8px;'>✓ {len(selected_periodo)} seleccionado{'s' if len(selected_periodo) > 1 else ''}</p>", unsafe_allow_html=True)
 
 # Aplicar filtros
 df_filtered = df.copy()
@@ -559,7 +695,7 @@ with k1:
     st.markdown("<h4 style='text-align: center; color: #5F6B75; margin-bottom: 0.5rem;'>Tareas</h4>", unsafe_allow_html=True)
     st.plotly_chart(
         plot_gauge(df_filtered['progreso_tareas'].mean(), "Tareas"),
-        use_container_width=True,
+        width="stretch",
         config={'displayModeBar': False},
         key="gauge_tareas"
     )
@@ -568,7 +704,7 @@ with k2:
     st.markdown("<h4 style='text-align: center; color: #5F6B75; margin-bottom: 0.5rem;'>Foros</h4>", unsafe_allow_html=True)
     st.plotly_chart(
         plot_gauge(df_filtered['progreso_foros'].mean(), "Foros"),
-        use_container_width=True,
+        width="stretch",
         config={'displayModeBar': False},
         key="gauge_foros"
     )
@@ -577,7 +713,7 @@ with k3:
     st.markdown("<h4 style='text-align: center; color: #5F6B75; margin-bottom: 0.5rem;'>Recursos</h4>", unsafe_allow_html=True)
     st.plotly_chart(
         plot_gauge(df_filtered['progreso_recursos'].mean(), "Recursos"),
-        use_container_width=True,
+        width="stretch",
         config={'displayModeBar': False},
         key="gauge_recursos"
     )
@@ -586,7 +722,7 @@ with k4:
     st.markdown("<h4 style='text-align: center; color: #5F6B75; margin-bottom: 0.5rem;'>Temas</h4>", unsafe_allow_html=True)
     st.plotly_chart(
         plot_gauge(df_filtered['progreso_temas'].mean(), "Temas"),
-        use_container_width=True,
+        width="stretch",
         config={'displayModeBar': False},
         key="gauge_temas"
     )
@@ -606,26 +742,28 @@ if selected_profesor:
         
         with col_info:
             if len(selected_profesor) == 1:
-                st.markdown(f"<p style='font-size: 14px;'>📊 Mostrando: <strong>{selected_profesor[0]}</strong></p>", unsafe_allow_html=True)
+                st.markdown(f"<p style='font-size: 14px; line-height: 38px;'>📊 Mostrando: <strong>{selected_profesor[0]}</strong></p>", unsafe_allow_html=True)
             else:
-                st.markdown(f"<p style='font-size: 14px;'>📊 Mostrando: <strong>{len(selected_profesor)} profesores</strong></p>", unsafe_allow_html=True)
+                st.markdown(f"<p style='font-size: 14px; line-height: 38px;'>📊 Mostrando: <strong>{len(selected_profesor)} profesores</strong></p>", unsafe_allow_html=True)
         
         with col_tipo:
+            # Selector de tipo de actividad
             activity_type = st.selectbox(
                 "Tipo",
                 ['Tarea', 'Foro', 'Recurso', 'Tema'],
-                key="select_activity_type"
+                key="select_activity_type",
+                label_visibility="collapsed"
             )
         
         with col_btn_clear:
-            if st.button("← Ver todos", key="btn_ver_todos", use_container_width=True):
+            if st.button("← Ver todos", key="btn_ver_todos", width="stretch"):
                 st.query_params.clear_profesor = "true"
                 st.rerun()
         
-        # Gráfica con datos REALES
+        # Gráfica con datos REALES usando periodos seleccionados
         st.plotly_chart(
-            plot_activity_timeline(selected_profesor, activity_type),
-            use_container_width=True,
+            plot_activity_timeline(selected_profesor, activity_type, selected_periodo),
+            width="stretch",
             config={'displayModeBar': False},
             key="chart_actividades"
         )
@@ -639,7 +777,12 @@ if selected_profesor:
         st.metric("En minutos", f"{int(df_filtered['minutos_respuesta'].mean())}")
         st.markdown("<div style='margin: 0.5rem 0;'></div>", unsafe_allow_html=True)
         
-        st.metric("Conversaciones pendientes", f"{int(df_filtered['conversaciones_pendientes'].sum())}")
+        # Calcular conversaciones pendientes correctamente
+        # Dividir cada fila por sus duplicadas ANTES de sumar
+        df_conversaciones = df_filtered[['conversaciones_pendientes', 'num_filas_duplicadas']].copy()
+        df_conversaciones['conversaciones_reales'] = df_conversaciones['conversaciones_pendientes'] / df_conversaciones['num_filas_duplicadas']
+        conversaciones_reales = int(df_conversaciones['conversaciones_reales'].sum())
+        st.metric("Conversaciones pendientes", f"{conversaciones_reales}")
 
 # Sin profesor: mostrar tabla
 else:
@@ -676,15 +819,24 @@ else:
             selection_mode='multiple',
             use_checkbox=True,
             header_checkbox=False,
-            pre_selected_rows=[]
+            pre_selected_rows=[],
+            rowMultiSelectWithClick=False,
+            suppressRowDeselection=False
         )
         gb.configure_column("Seleccionar", hide=True)
-        gb.configure_default_column(resizable=False, filterable=False, sortable=True, editable=False)
+        gb.configure_column("Profesor", checkboxSelection=True, headerCheckboxSelection=False, width=280)
+        gb.configure_column("Campus", width=200)
+        gb.configure_column("Tareas", width=100)
+        gb.configure_column("Recursos", width=100)
+        gb.configure_column("Temas", width=100)
+        gb.configure_column("Foros", width=100)
+        gb.configure_default_column(resizable=True, filterable=False, sortable=True, editable=False)
         gb.configure_grid_options(
             domLayout='normal',
             enableRangeSelection=False,
             rowHeight=42,
-            headerHeight=45
+            headerHeight=45,
+            suppressRowClickSelection=True
         )
         
         grid_options = gb.build()
@@ -747,25 +899,27 @@ else:
         
         # Obtener seleccionados
         selected_rows = grid_response['selected_rows']
+        selected_from_table = []
+        
         if isinstance(selected_rows, pd.DataFrame) and not selected_rows.empty:
             selected_from_table = selected_rows['Profesor'].tolist()
-        else:
-            selected_from_table = []
+        elif isinstance(selected_rows, list) and len(selected_rows) > 0:
+            selected_from_table = [row['Profesor'] for row in selected_rows if 'Profesor' in row]
         
-        # Botón
-        col_empty, col_btn = st.columns([3.5, 1.5])
-        with col_btn:
-            if len(selected_from_table) > 0:
-                st.markdown(f"""
-                <div style='text-align: right; margin-top: 8px;'>
-                    <small style='font-size: 12px;'>{len(selected_from_table)} seleccionado{'s' if len(selected_from_table) > 1 else ''}</small>
-                </div>
-                """, unsafe_allow_html=True)
-                if st.button("Ver actividades", key="btn_ver_actividades", use_container_width=True):
+        # Botón - Centrado debajo de la tabla
+        st.markdown("<div style='margin-top: 12px;'></div>", unsafe_allow_html=True)
+        
+        if len(selected_from_table) > 0:
+            col_info, col_btn = st.columns([2, 1])
+            with col_info:
+                st.markdown(f"<p style='font-size: 13px; color: #666; line-height: 38px;'>{len(selected_from_table)} profesor{'es' if len(selected_from_table) > 1 else ''} seleccionado{'s' if len(selected_from_table) > 1 else ''}</p>", unsafe_allow_html=True)
+            with col_btn:
+                if st.button("Ver actividades", key="btn_ver_actividades", width="stretch", type="primary"):
+                    # Usar session state temporal que se aplica ANTES de crear widgets
                     st.session_state['_temp_selected_profs'] = selected_from_table
                     st.rerun()
-            else:
-                st.button("Ver actividades", key="btn_ver_actividades_disabled", use_container_width=True, disabled=True)
+        else:
+            st.button("Seleccione uno o más profesores", key="btn_ver_actividades_disabled", width="stretch", disabled=True)
     
     with col_side:
         st.markdown("<h3 style='text-align: center; font-size: 15px; font-weight: 700; margin-bottom: 0.8rem; margin-top: 0;'>Tiempo promedio para responder mensajes</h3>", unsafe_allow_html=True)
@@ -776,4 +930,9 @@ else:
         st.metric("En minutos", f"{int(df_filtered['minutos_respuesta'].mean())}")
         st.markdown("<div style='margin: 0.5rem 0;'></div>", unsafe_allow_html=True)
         
-        st.metric("Conversaciones pendientes", f"{int(df_filtered['conversaciones_pendientes'].sum())}")
+        # Calcular conversaciones pendientes correctamente
+        # Dividir cada fila por sus duplicadas ANTES de sumar
+        df_conversaciones = df_filtered[['conversaciones_pendientes', 'num_filas_duplicadas']].copy()
+        df_conversaciones['conversaciones_reales'] = df_conversaciones['conversaciones_pendientes'] / df_conversaciones['num_filas_duplicadas']
+        conversaciones_reales = int(df_conversaciones['conversaciones_reales'].sum())
+        st.metric("Conversaciones pendientes", f"{conversaciones_reales}")
