@@ -246,9 +246,10 @@ st.markdown("""
     
     /* Sombra para los KPIs (gráficos plotly) */
     div[data-testid="stPlotlyChart"] > div {
-        border-radius: 8px !important;
+        border-radius: 12px !important;
         box-shadow: 0 2px 4px rgba(0,0,0,0.1) !important;
         overflow: hidden !important;
+        background-color: white !important;
     }
 </style>
 """, unsafe_allow_html=True)
@@ -297,7 +298,7 @@ def get_data():
         return pd.DataFrame()
 
 def plot_gauge(value, title):
-    """Genera semáforo con los colores EXACTOS de Looker con diseño mejorado."""
+    """Genera semáforo estilo gauge semicírculo con los colores exactos de Looker."""
     # Colores extraídos de Looker
     if value >= 0.85:
         color = "#4CD07D"  # Verde
@@ -307,20 +308,40 @@ def plot_gauge(value, title):
         color = "#dc3545"  # Rojo
 
     fig = go.Figure(go.Indicator(
-        mode="number",
+        mode="gauge+number",
         value=value * 100,
         number={
             'suffix': " %", 
-            'font': {'size': 44, 'color': 'white', 'family': 'Arial', 'weight': 500}
+            'font': {'size': 32, 'color': color, 'family': 'Arial', 'weight': 600}
+        },
+        gauge={
+            'axis': {
+                'range': [None, 100], 
+                'tickwidth': 0,
+                'tickcolor': "white",
+                'visible': False
+            },
+            'bar': {'color': color, 'thickness': 0.75},
+            'bgcolor': "#e9ecef",
+            'borderwidth': 0,
+            'bordercolor': "white",
+            'steps': [
+                {'range': [0, 100], 'color': '#e9ecef'}
+            ],
+            'threshold': {
+                'line': {'color': "white", 'width': 0},
+                'thickness': 0.75,
+                'value': 100
+            }
         },
         domain={'x': [0, 1], 'y': [0, 1]}
     ))
     
     fig.update_layout(
-        height=110,
-        margin=dict(l=10, r=10, t=10, b=10),
-        paper_bgcolor=color,
-        plot_bgcolor=color,
+        height=140,
+        margin=dict(l=20, r=20, t=10, b=10),
+        paper_bgcolor='white',
+        plot_bgcolor='white',
         font={'family': "Arial, sans-serif"}
     )
     return fig
@@ -431,15 +452,25 @@ with col_title:
     st.markdown("<h1 style='margin-bottom: 0;'>Reporte de estadísticas de app LBS+</h1>", unsafe_allow_html=True)
 
 with col_activities:
-    if st.button("📚 Actividades", key="btn_activities", use_container_width=True):
-        st.session_state.view_mode = 'actividades' if st.session_state.view_mode == 'dashboard' else 'dashboard'
-        st.rerun()
+    # Botón cambia según el modo actual
+    if st.session_state.view_mode == 'dashboard':
+        if st.button("📚 Actividades", key="btn_activities", use_container_width=True):
+            st.session_state.view_mode = 'actividades'
+            st.rerun()
+    else:
+        if st.button("📊 Dashboard", key="btn_dashboard", use_container_width=True):
+            st.session_state.view_mode = 'dashboard'
+            st.rerun()
 
 with col_back:
-    st.button("← Volver", use_container_width=True)
+    if st.button("← Volver", use_container_width=True, key="btn_back"):
+        # Implementar lógica de "volver" si es necesario
+        # Por ahora solo resetea la vista al dashboard
+        st.session_state.view_mode = 'dashboard'
+        st.rerun()
 
 with col_clear:
-    if st.button("Borrar filtros", use_container_width=True):
+    if st.button("Borrar filtros", use_container_width=True, key="btn_clear"):
         # Limpiar los valores de los filtros en session_state
         st.session_state['filter_profesor'] = []
         st.session_state['filter_campus'] = []
@@ -610,8 +641,24 @@ if st.session_state.view_mode == 'dashboard':
             hide_index=True,
             on_select="rerun",
             selection_mode="single-row",
-            height=320
+            height=320,
+            key="tabla_profesores"
         )
+        
+        # Si hay una fila seleccionada, aplicarla como filtro
+        if selection.selection.rows:
+            idx = selection.selection.rows[0]
+            row = df_display.iloc[idx]
+            selected_prof = row['Profesor']
+            selected_camp = row['Campus']
+            
+            # Actualizar filtros en session_state
+            if selected_prof not in st.session_state['filter_profesor']:
+                st.session_state['filter_profesor'] = [selected_prof]
+                st.rerun()
+            if selected_camp not in st.session_state['filter_campus']:
+                st.session_state['filter_campus'] = [selected_camp]
+                st.rerun()
 
     with col_side:
         st.markdown("<h4 style='text-align: center; color: #888; font-size: 13px; font-weight: 400; margin-bottom: 1rem;'>Tiempo promedio para<br>responder mensajes</h4>", unsafe_allow_html=True)
@@ -623,12 +670,6 @@ if st.session_state.view_mode == 'dashboard':
         st.markdown("<div style='margin: 0.8rem 0;'></div>", unsafe_allow_html=True)
         
         st.metric("Conversaciones pendientes", f"{int(df_filtered['conversaciones_pendientes'].sum())}")
-
-    # Detalle (Drill-down)
-    if selection.selection.rows:
-        idx = selection.selection.rows[0]
-        row = df_display.iloc[idx]
-        st.info(f"👤 Seleccionaste: **{row['Profesor']}** del campus **{row['Campus']}**")
 
 else:  # Vista de Actividades
     # Filtro adicional para tipo de actividad
@@ -672,7 +713,8 @@ else:  # Vista de Actividades
             df_display,
             use_container_width=True,
             hide_index=True,
-            height=400
+            height=400,
+            key="tabla_profesores_actividades"
         )
     
     with col_chart:
