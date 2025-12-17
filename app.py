@@ -13,27 +13,9 @@ st.set_page_config(
     initial_sidebar_state="collapsed"
 )
 
-# --- CSS PERSONALIZADO PARA IGUALAR LOOKER (FORZAR TEMA CLARO) ---
+# --- CSS PERSONALIZADO PARA IGUALAR LOOKER ---
 st.markdown("""
 <style>
-    /* FORZAR TEMA CLARO */
-    [data-testid="stAppViewContainer"] {
-        background-color: #f8f9fa !important;
-    }
-    
-    [data-testid="stHeader"] {
-        background-color: white !important;
-    }
-    
-    [data-testid="stSidebar"] {
-        display: none !important;
-    }
-    
-    /* Forzar todos los textos a color oscuro */
-    * {
-        color: #333 !important;
-    }
-    
     #MainMenu {visibility: hidden;}
     footer {visibility: hidden;}
     
@@ -41,11 +23,21 @@ st.markdown("""
         background-color: #f8f9fa !important;
     }
     
-    /* Reducir padding superior */
+    [data-testid="stSidebar"] {
+        display: none !important;
+    }
+    
+    .stApp { 
+        background-color: #f8f9fa !important;
+    }
+    
+    /* Reducir padding superior y configurar ancho máximo */
     .block-container {
         padding-top: 1.5rem;
         padding-bottom: 2rem;
-        max-width: 1500px;
+        max-width: 1500px !important;
+        padding-left: 2rem !important;
+        padding-right: 2rem !important;
     }
 
     /* Estilo de las tarjetas laterales (blancas con borde suave) */
@@ -73,40 +65,46 @@ st.markdown("""
         color: #333 !important;
     }
 
-    /* Encabezado de tabla - color exacto de Looker */
+    /* Encabezado de tabla - más claro y suave */
     thead tr th {
-        background-color: #6B7780 !important;
-        color: white !important;
-        font-weight: 500 !important;
+        background-color: #E8EAED !important;
+        color: #5F6B75 !important;
+        font-weight: 600 !important;
         font-size: 13px !important;
         padding: 14px 12px !important;
         border: none !important;
+        text-align: left !important;
+        letter-spacing: 0.3px !important;
     }
     
-    /* Celdas de tabla - alternando colores */
+    /* Celdas de tabla - texto más oscuro para mejor contraste */
     tbody tr td {
         font-size: 13px !important;
-        padding: 10px 12px !important;
-        color: #666 !important;
+        padding: 12px 12px !important;
+        color: #333 !important;
         border: none !important;
+        font-weight: 400 !important;
     }
     
-    /* Filas pares - blanco */
-    tbody tr:nth-child(even) td {
-        background-color: white !important;
+    /* Todas las filas con fondo blanco */
+    tbody tr td {
+        background-color: #FFFFFF !important;
     }
     
-    /* Filas impares - gris muy claro */
-    tbody tr:nth-child(odd) td {
-        background-color: #f8f9fa !important;
-    }
-    
-    /* Hover en filas de tabla */
+    /* Hover en filas de tabla - azul muy claro */
     tbody tr:hover td {
-        background-color: #e8f4f8 !important;
+        background-color: #F0F7FA !important;
+        cursor: pointer;
     }
     
-    /* Contenedor de dataframe con sombra */
+    /* Primera columna (checkbox) más estrecha */
+    tbody tr td:first-child,
+    thead tr th:first-child {
+        width: 50px !important;
+        text-align: center !important;
+    }
+    
+    /* Contenedor de dataframe con sombra y BORDE VISIBLE */
     [data-testid="stDataFrame"] {
         background-color: white !important;
         border: 1px solid #d0d0d0 !important;
@@ -114,11 +112,20 @@ st.markdown("""
         overflow: hidden !important;
         box-shadow: 0 2px 4px rgba(0,0,0,0.08) !important;
     }
+    
+    /* Forzar que el dataframe sea visible */
+    [data-testid="stDataFrame"] > div {
+        background-color: white !important;
+    }
+    
+    /* Asegurar que la tabla tenga fondo blanco */
+    table {
+        background-color: white !important;
+    }
 
     /* Botones estilo Looker */
     div.stButton > button {
         background-color: #5F6B75 !important;
-        color: white !important;
         border: none !important;
         border-radius: 24px !important;
         padding: 10px 28px !important;
@@ -126,9 +133,9 @@ st.markdown("""
         font-weight: 500 !important;
         transition: all 0.2s !important;
     }
+    
     div.stButton > button:hover {
         background-color: #4b545c !important;
-        color: white !important;
         box-shadow: 0 2px 8px rgba(0,0,0,0.15) !important;
     }
     
@@ -189,6 +196,12 @@ st.markdown("""
     
     span[data-baseweb="tag"]:hover {
         background-color: #d8d8d8 !important;
+    }
+    
+    /* Ocultar chips individuales cuando hay múltiples seleccionados */
+    div[data-baseweb="select"] > div > div:first-child {
+        max-width: 100%;
+        overflow: hidden;
     }
     
     /* Texto dentro del multiselect */
@@ -253,6 +266,15 @@ st.markdown("""
     }
 </style>
 """, unsafe_allow_html=True)
+
+def format_selection_text(selected_items, item_type="items"):
+    """Formatea el texto de selección para mostrar 'n seleccionados' en lugar de chips."""
+    if not selected_items:
+        return None
+    elif len(selected_items) == 1:
+        return selected_items[0]
+    else:
+        return f"{len(selected_items)} seleccionados"
 
 # --- FUNCIONES ---
 @st.cache_data(ttl=300)
@@ -346,43 +368,73 @@ def plot_gauge(value, title):
     )
     return fig
 
-def plot_activity_bars(df_filtered, activity_type='Tareas'):
-    """Genera gráfica de barras para conteo de actividades por profesor."""
-    # Mapeo de tipo a columna
-    activity_map = {
-        'Tareas': 'cant_tareas',
-        'Temas': 'cant_temas',
-        'Foros': 'cant_foros',
-        'Recursos': 'cant_recursos'
-    }
+def plot_activity_timeline(df_filtered, activity_type='Tareas'):
+    """Genera gráfica de actividades a lo largo del tiempo (simulada por ahora)."""
+    import numpy as np
+    from datetime import datetime, timedelta
     
-    col_name = activity_map.get(activity_type, 'cant_tareas')
+    # Si no hay datos filtrados, retornar gráfica vacía con mensaje
+    if df_filtered.empty:
+        fig = go.Figure()
+        fig.add_annotation(
+            text="Selecciona un profesor para ver las actividades",
+            xref="paper", yref="paper",
+            x=0.5, y=0.5, showarrow=False,
+            font=dict(size=16, color="#999")
+        )
+        fig.update_layout(
+            height=350,
+            margin=dict(l=40, r=20, t=30, b=40),
+            paper_bgcolor='white',
+            plot_bgcolor='white',
+            xaxis=dict(showgrid=False, showticklabels=False),
+            yaxis=dict(showgrid=False, showticklabels=False)
+        )
+        return fig
     
-    # Agrupar por profesor y sumar actividades
-    df_grouped = df_filtered.groupby('profesor')[col_name].sum().sort_values(ascending=False).head(15)
+    # Generar datos simulados de actividades por fecha
+    # En producción, estos datos vendrían de una columna de fecha en tu base de datos
+    end_date = datetime.now()
+    start_date = end_date - timedelta(days=30)
+    dates = pd.date_range(start=start_date, end=end_date, freq='D')
+    
+    # Simular conteos basados en el tipo de actividad
+    np.random.seed(42)
+    counts = np.random.randint(50, 200, size=len(dates))
+    
+    df_timeline = pd.DataFrame({
+        'fecha': dates,
+        'count': counts
+    })
     
     fig = go.Figure()
-    fig.add_trace(go.Bar(
-        x=df_grouped.index,
-        y=df_grouped.values,
-        marker_color='#5F6B75',
-        name=activity_type
+    fig.add_trace(go.Scatter(
+        x=df_timeline['fecha'],
+        y=df_timeline['count'],
+        mode='lines',
+        fill='tozeroy',
+        line=dict(color='#5F6B75', width=2),
+        fillcolor='rgba(95, 107, 117, 0.2)',
+        name='Actividades'
     ))
     
     fig.update_layout(
         height=350,
-        margin=dict(l=40, r=20, t=30, b=100),
+        margin=dict(l=40, r=20, t=30, b=60),
         paper_bgcolor='white',
         plot_bgcolor='white',
         xaxis=dict(
-            showgrid=False,
+            showgrid=True,
+            gridcolor='#f0f0f0',
             title='',
-            tickangle=-45
+            tickformat='%d %b',
+            tickangle=0
         ),
         yaxis=dict(
             showgrid=True,
             gridcolor='#f0f0f0',
-            title='Cantidad'
+            title='Cantidad',
+            range=[0, df_timeline['count'].max() * 1.1]
         ),
         showlegend=False,
         font={'family': "Arial, sans-serif", 'size': 11}
@@ -429,6 +481,16 @@ if df.empty:
 if 'view_mode' not in st.session_state:
     st.session_state.view_mode = 'dashboard'  # 'dashboard' o 'actividades'
 
+# Verificar si se debe limpiar el filtro de profesor
+if "clear_profesor" in st.query_params:
+    st.session_state['filter_profesor'] = []
+    st.query_params.clear()
+
+# Aplicar selección temporal de tabla si existe
+if '_temp_selected_profs' in st.session_state and st.session_state['_temp_selected_profs']:
+    st.session_state['filter_profesor'] = st.session_state['_temp_selected_profs']
+    del st.session_state['_temp_selected_profs']
+
 # Inicializar filtros en session_state si no existen
 if 'filter_profesor' not in st.session_state:
     st.session_state['filter_profesor'] = []
@@ -446,28 +508,10 @@ if 'filter_periodo' not in st.session_state:
     st.session_state['filter_periodo'] = []
 
 # Header con título y botones
-col_title, col_spacer, col_activities, col_back, col_clear = st.columns([3.5, 2.5, 1.3, 0.9, 1.1])
+col_title, col_spacer, col_clear = st.columns([5, 3, 1.1])
 
 with col_title:
     st.markdown("<h1 style='margin-bottom: 0;'>Reporte de estadísticas de app LBS+</h1>", unsafe_allow_html=True)
-
-with col_activities:
-    # Botón cambia según el modo actual
-    if st.session_state.view_mode == 'dashboard':
-        if st.button("📚 Actividades", key="btn_activities", use_container_width=True):
-            st.session_state.view_mode = 'actividades'
-            st.rerun()
-    else:
-        if st.button("📊 Dashboard", key="btn_dashboard", use_container_width=True):
-            st.session_state.view_mode = 'dashboard'
-            st.rerun()
-
-with col_back:
-    if st.button("← Volver", use_container_width=True, key="btn_back"):
-        # Implementar lógica de "volver" si es necesario
-        # Por ahora solo resetea la vista al dashboard
-        st.session_state.view_mode = 'dashboard'
-        st.rerun()
 
 with col_clear:
     if st.button("Borrar filtros", use_container_width=True, key="btn_clear"):
@@ -492,56 +536,97 @@ with filter_cols[0]:
         df['profesor'].unique(), 
         key='filter_profesor', 
         placeholder="Profesor",
-        default=st.session_state['filter_profesor']
+        default=st.session_state['filter_profesor'],
+        label_visibility="visible"
     )
+    if len(selected_profesor) > 1:
+        st.caption(f"✓ {len(selected_profesor)} seleccionados")
+    elif len(selected_profesor) == 1:
+        st.caption(f"✓ {selected_profesor[0]}")
+        
 with filter_cols[1]:
     selected_campus = st.multiselect(
         "Campus", 
         df['campus'].unique(), 
         key='filter_campus', 
         placeholder="Campus",
-        default=st.session_state['filter_campus']
+        default=st.session_state['filter_campus'],
+        label_visibility="visible"
     )
+    if len(selected_campus) > 1:
+        st.caption(f"✓ {len(selected_campus)} seleccionados")
+    elif len(selected_campus) == 1:
+        st.caption(f"✓ {selected_campus[0]}")
+        
 with filter_cols[2]:
     selected_escolaridad = st.multiselect(
         "Escolaridad", 
         df['escolaridad'].unique(), 
         key='filter_escolaridad', 
         placeholder="Escolaridad",
-        default=st.session_state['filter_escolaridad']
+        default=st.session_state['filter_escolaridad'],
+        label_visibility="visible"
     )
+    if len(selected_escolaridad) > 1:
+        st.caption(f"✓ {len(selected_escolaridad)} seleccionados")
+    elif len(selected_escolaridad) == 1:
+        st.caption(f"✓ {selected_escolaridad[0]}")
+        
 with filter_cols[3]:
     selected_grado = st.multiselect(
         "Grado", 
         df['grado'].unique(), 
         key='filter_grado', 
         placeholder="Grado",
-        default=st.session_state['filter_grado']
+        default=st.session_state['filter_grado'],
+        label_visibility="visible"
     )
+    if len(selected_grado) > 1:
+        st.caption(f"✓ {len(selected_grado)} seleccionados")
+    elif len(selected_grado) == 1:
+        st.caption(f"✓ {selected_grado[0]}")
+        
 with filter_cols[4]:
     selected_grupo = st.multiselect(
         "Grupo", 
         df['grupo'].unique(), 
         key='filter_grupo', 
         placeholder="Grupo",
-        default=st.session_state['filter_grupo']
+        default=st.session_state['filter_grupo'],
+        label_visibility="visible"
     )
+    if len(selected_grupo) > 1:
+        st.caption(f"✓ {len(selected_grupo)} seleccionados")
+    elif len(selected_grupo) == 1:
+        st.caption(f"✓ {selected_grupo[0]}")
+        
 with filter_cols[5]:
     selected_materia = st.multiselect(
         "Materia", 
         df['materia'].unique(), 
         key='filter_materia', 
         placeholder="Materia",
-        default=st.session_state['filter_materia']
+        default=st.session_state['filter_materia'],
+        label_visibility="visible"
     )
+    if len(selected_materia) > 1:
+        st.caption(f"✓ {len(selected_materia)} seleccionados")
+    elif len(selected_materia) == 1:
+        st.caption(f"✓ {selected_materia[0]}")
+        
 with filter_cols[6]:
     selected_periodo = st.multiselect(
         "Periodo: 2025-10", 
         df['periodo'].unique(), 
         key='filter_periodo', 
         placeholder="Periodo",
-        default=st.session_state['filter_periodo']
+        default=st.session_state['filter_periodo'],
+        label_visibility="visible"
     )
+    if len(selected_periodo) > 1:
+        st.caption(f"✓ {len(selected_periodo)} seleccionados")
+    elif len(selected_periodo) == 1:
+        st.caption(f"✓ {selected_periodo[0]}")
 
 # Aplicar filtros
 df_filtered = df.copy()
@@ -605,123 +690,121 @@ if st.session_state.view_mode == 'dashboard':
 
     st.markdown("<br>", unsafe_allow_html=True)
 
-    # Sección Inferior (Tabla y Métricas Laterales)
-    col_table, col_side = st.columns([3.2, 1], gap="medium")
-
-    with col_table:
-        st.markdown("<h3 style='color: #888; margin-bottom: 0.8rem;'>Lista de profesores</h3>", unsafe_allow_html=True)
+    # Sección Inferior - Cambia según si hay profesor seleccionado
+    if selected_profesor:
+        # Vista con gráfica de actividades
+        col_chart_main, col_side = st.columns([3.2, 1], gap="medium")
         
-        # Agrupar y formatear datos
-        df_display = df_filtered.groupby(['profesor', 'campus']).agg({
-            'progreso_tareas': 'mean',
-            'progreso_recursos': 'mean',
-            'progreso_temas': 'mean',
-            'progreso_foros': 'mean'
-        }).reset_index()
-        
-        # Convertir a porcentajes
-        df_display['Tareas'] = (df_display['progreso_tareas'] * 100).round(0).astype(int).astype(str) + ' %'
-        df_display['Recursos'] = (df_display['progreso_recursos'] * 100).round(0).astype(int).astype(str) + ' %'
-        df_display['Temas'] = (df_display['progreso_temas'] * 100).round(0).astype(int).astype(str) + ' %'
-        df_display['Foros'] = (df_display['progreso_foros'] * 100).round(0).astype(int).astype(str) + ' %'
-        
-        # Renombrar columnas
-        df_display = df_display.rename(columns={
-            'profesor': 'Profesor',
-            'campus': 'Campus'
-        })
-        
-        # Seleccionar solo las columnas que queremos mostrar
-        df_display = df_display[['Profesor', 'Campus', 'Tareas', 'Recursos', 'Temas', 'Foros']]
-        
-        # Mostrar tabla con selección
-        selection = st.dataframe(
-            df_display,
-            use_container_width=True,
-            hide_index=True,
-            on_select="rerun",
-            selection_mode="single-row",
-            height=320,
-            key="tabla_profesores"
-        )
-        
-        # Si hay una fila seleccionada, aplicarla como filtro
-        if selection.selection.rows:
-            idx = selection.selection.rows[0]
-            row = df_display.iloc[idx]
-            selected_prof = row['Profesor']
-            selected_camp = row['Campus']
+        with col_chart_main:
+            # Mostrar profesores seleccionados con botón para limpiar
+            st.markdown("<h3 style='color: #888; margin-bottom: 0.8rem;'>Actividades a lo largo del tiempo</h3>", unsafe_allow_html=True)
             
-            # Actualizar filtros en session_state
-            if selected_prof not in st.session_state['filter_profesor']:
-                st.session_state['filter_profesor'] = [selected_prof]
-                st.rerun()
-            if selected_camp not in st.session_state['filter_campus']:
-                st.session_state['filter_campus'] = [selected_camp]
+            # Info de profesores seleccionados
+            col_info, col_btn_clear = st.columns([3, 1])
+            with col_info:
+                if len(selected_profesor) == 1:
+                    st.markdown(f"<p style='color: #666; font-size: 14px;'>📊 Mostrando actividades de: <strong>{selected_profesor[0]}</strong></p>", unsafe_allow_html=True)
+                else:
+                    st.markdown(f"<p style='color: #666; font-size: 14px;'>📊 Mostrando actividades de <strong>{len(selected_profesor)} profesores</strong></p>", unsafe_allow_html=True)
+            
+            with col_btn_clear:
+                if st.button("← Ver todos", key="btn_ver_todos", use_container_width=True):
+                    # Usar query params para evitar el error de session_state
+                    st.query_params.clear_profesor = "true"
+                    st.rerun()
+            
+            # Selector de tipo de actividad
+            activity_type = st.selectbox(
+                "Tipo de actividad",
+                ['Tareas', 'Temas', 'Foros', 'Recursos'],
+                key="select_activity_type",
+                label_visibility="collapsed"
+            )
+            
+            # Gráfica de actividades
+            st.plotly_chart(
+                plot_activity_timeline(df_filtered, activity_type),
+                use_container_width=True,
+                config={'displayModeBar': False},
+                key="chart_actividades_dashboard"
+            )
+        
+        with col_side:
+            st.markdown("<h4 style='text-align: center; color: #888; font-size: 13px; font-weight: 400; margin-bottom: 1rem;'>Tiempo promedio para<br>responder mensajes</h4>", unsafe_allow_html=True)
+            
+            st.metric("En horas", f"{int(df_filtered['horas_respuesta'].mean())}")
+            st.markdown("<div style='margin: 0.8rem 0;'></div>", unsafe_allow_html=True)
+            
+            st.metric("En minutos", f"{int(df_filtered['minutos_respuesta'].mean())}")
+            st.markdown("<div style='margin: 0.8rem 0;'></div>", unsafe_allow_html=True)
+            
+            st.metric("Conversaciones pendientes", f"{int(df_filtered['conversaciones_pendientes'].sum())}")
+    
+    else:
+        # Vista normal con tabla de profesores
+        col_table, col_side = st.columns([3.2, 1], gap="medium")
+
+        with col_table:
+            st.markdown("<h3 style='color: #888; margin-bottom: 0.8rem;'>Lista de profesores</h3>", unsafe_allow_html=True)
+            st.caption("Haz clic en el checkbox para ver actividades del profesor")
+            
+            # Agrupar y formatear datos
+            df_display = df_filtered.groupby(['profesor', 'campus']).agg({
+                'progreso_tareas': 'mean',
+                'progreso_recursos': 'mean',
+                'progreso_temas': 'mean',
+                'progreso_foros': 'mean'
+            }).reset_index()
+            
+            # Convertir a porcentajes
+            df_display['Tareas'] = (df_display['progreso_tareas'] * 100).round(0).astype(int).astype(str) + ' %'
+            df_display['Recursos'] = (df_display['progreso_recursos'] * 100).round(0).astype(int).astype(str) + ' %'
+            df_display['Temas'] = (df_display['progreso_temas'] * 100).round(0).astype(int).astype(str) + ' %'
+            df_display['Foros'] = (df_display['progreso_foros'] * 100).round(0).astype(int).astype(str) + ' %'
+            
+            # Renombrar columnas
+            df_display = df_display.rename(columns={
+                'profesor': 'Profesor',
+                'campus': 'Campus'
+            })
+            
+            # Agregar columna de selección
+            df_display.insert(0, '✓', False)
+            
+            # Seleccionar columnas finales
+            df_display = df_display[['✓', 'Profesor', 'Campus', 'Tareas', 'Recursos', 'Temas', 'Foros']]
+            
+            # Usar data_editor para permitir selección con checkbox
+            edited_df = st.data_editor(
+                df_display,
+                use_container_width=True,
+                hide_index=True,
+                height=280,
+                key="tabla_profesores_editor",
+                column_config={
+                    "✓": st.column_config.CheckboxColumn(
+                        "Seleccionar",
+                        help="Selecciona para ver actividades",
+                        default=False,
+                    )
+                },
+                disabled=["Profesor", "Campus", "Tareas", "Recursos", "Temas", "Foros"]
+            )
+            
+            # Si hay algún profesor seleccionado en la tabla, usar query params para actualizar
+            selected_from_table = edited_df[edited_df['✓'] == True]['Profesor'].tolist()
+            if selected_from_table and selected_from_table != selected_profesor:
+                # Usar session_state con un key diferente para evitar conflictos
+                st.session_state['_temp_selected_profs'] = selected_from_table
                 st.rerun()
 
-    with col_side:
-        st.markdown("<h4 style='text-align: center; color: #888; font-size: 13px; font-weight: 400; margin-bottom: 1rem;'>Tiempo promedio para<br>responder mensajes</h4>", unsafe_allow_html=True)
-        
-        st.metric("En horas", f"{int(df_filtered['horas_respuesta'].mean())}")
-        st.markdown("<div style='margin: 0.8rem 0;'></div>", unsafe_allow_html=True)
-        
-        st.metric("En minutos", f"{int(df_filtered['minutos_respuesta'].mean())}")
-        st.markdown("<div style='margin: 0.8rem 0;'></div>", unsafe_allow_html=True)
-        
-        st.metric("Conversaciones pendientes", f"{int(df_filtered['conversaciones_pendientes'].sum())}")
-
-else:  # Vista de Actividades
-    # Filtro adicional para tipo de actividad
-    col_empty, col_filter_activity = st.columns([6, 2])
-    with col_filter_activity:
-        activity_type = st.selectbox(
-            "Tipo de actividad",
-            ['Tareas', 'Temas', 'Foros', 'Recursos'],
-            label_visibility="visible"
-        )
-    
-    st.markdown("<br>", unsafe_allow_html=True)
-    
-    # Layout con tabla y gráfica
-    col_table_act, col_chart = st.columns([2.8, 2], gap="medium")
-    
-    with col_table_act:
-        st.markdown("<h3 style='color: #888; margin-bottom: 0.8rem;'>Lista de profesores</h3>", unsafe_allow_html=True)
-        
-        # Misma tabla que en vista dashboard
-        df_display = df_filtered.groupby(['profesor', 'campus']).agg({
-            'progreso_tareas': 'mean',
-            'progreso_recursos': 'mean',
-            'progreso_temas': 'mean',
-            'progreso_foros': 'mean'
-        }).reset_index()
-        
-        df_display['Tareas'] = (df_display['progreso_tareas'] * 100).round(0).astype(int).astype(str) + ' %'
-        df_display['Recursos'] = (df_display['progreso_recursos'] * 100).round(0).astype(int).astype(str) + ' %'
-        df_display['Temas'] = (df_display['progreso_temas'] * 100).round(0).astype(int).astype(str) + ' %'
-        df_display['Foros'] = (df_display['progreso_foros'] * 100).round(0).astype(int).astype(str) + ' %'
-        
-        df_display = df_display.rename(columns={
-            'profesor': 'Profesor',
-            'campus': 'Campus'
-        })
-        
-        df_display = df_display[['Profesor', 'Campus', 'Tareas', 'Recursos', 'Temas', 'Foros']]
-        
-        st.dataframe(
-            df_display,
-            use_container_width=True,
-            hide_index=True,
-            height=400,
-            key="tabla_profesores_actividades"
-        )
-    
-    with col_chart:
-        st.markdown(f"<h3 style='color: #888; margin-bottom: 0.8rem;'>{activity_type} por profesor</h3>", unsafe_allow_html=True)
-        st.plotly_chart(
-            plot_activity_bars(df_filtered, activity_type),
-            use_container_width=True,
-            config={'displayModeBar': False},
-            key="chart_actividades"
-        )
+        with col_side:
+            st.markdown("<h4 style='text-align: center; color: #888; font-size: 13px; font-weight: 400; margin-bottom: 1rem;'>Tiempo promedio para<br>responder mensajes</h4>", unsafe_allow_html=True)
+            
+            st.metric("En horas", f"{int(df_filtered['horas_respuesta'].mean())}")
+            st.markdown("<div style='margin: 0.8rem 0;'></div>", unsafe_allow_html=True)
+            
+            st.metric("En minutos", f"{int(df_filtered['minutos_respuesta'].mean())}")
+            st.markdown("<div style='margin: 0.8rem 0;'></div>", unsafe_allow_html=True)
+            
+            st.metric("Conversaciones pendientes", f"{int(df_filtered['conversaciones_pendientes'].sum())}")
