@@ -40,32 +40,34 @@ st.markdown("""
         padding-right: 2rem !important;
     }
 
-    /* Estilo de las tarjetas laterales (blancas con borde suave) */
+    /* Estilo de las tarjetas laterales - más compactas */
     div[data-testid="stMetric"] {
         background-color: white !important;
         border: 1px solid #d0d0d0 !important;
         border-radius: 12px !important;
-        padding: 20px !important;
+        padding: 16px 12px !important;
         text-align: center !important;
         box-shadow: 0 2px 4px rgba(0,0,0,0.08) !important;
     }
     
-    /* Etiquetas de métricas */
+    /* Etiquetas de métricas - centradas y en negrita */
     div[data-testid="stMetric"] label {
-        font-size: 13px !important;
-        color: #888 !important;
-        font-weight: 400 !important;
+        font-size: 14px !important;
+        color: #555 !important;
+        font-weight: 600 !important;
         text-transform: none !important;
+        text-align: center !important;
+        display: block !important;
     }
     
-    /* Valores de métricas */
+    /* Valores de métricas más pequeños */
     div[data-testid="stMetric"] div[data-testid="stMetricValue"] {
-        font-size: 42px !important;
-        font-weight: 400 !important;
+        font-size: 36px !important;
+        font-weight: 500 !important;
         color: #333 !important;
     }
 
-    /* Encabezado de tabla - más claro y suave */
+    /* Encabezado de tabla - más claro y suave - FORZAR COLORES */
     thead tr th {
         background-color: #E8EAED !important;
         color: #5F6B75 !important;
@@ -77,17 +79,13 @@ st.markdown("""
         letter-spacing: 0.3px !important;
     }
     
-    /* Celdas de tabla - texto más oscuro para mejor contraste */
+    /* FORZAR colores claros en celdas - override del tema oscuro */
     tbody tr td {
         font-size: 13px !important;
         padding: 12px 12px !important;
         color: #333 !important;
         border: none !important;
         font-weight: 400 !important;
-    }
-    
-    /* Todas las filas con fondo blanco */
-    tbody tr td {
         background-color: #FFFFFF !important;
     }
     
@@ -95,6 +93,21 @@ st.markdown("""
     tbody tr:hover td {
         background-color: #F0F7FA !important;
         cursor: pointer;
+        color: #333 !important;
+    }
+    
+    /* FORZAR fondo blanco en toda la tabla */
+    table {
+        background-color: white !important;
+    }
+    
+    /* Forzar fondo blanco en el contenedor de la tabla */
+    [data-testid="stDataFrame"] {
+        background-color: white !important;
+    }
+    
+    [data-testid="stDataFrame"] > div {
+        background-color: white !important;
     }
     
     /* Primera columna (checkbox) más estrecha */
@@ -102,6 +115,15 @@ st.markdown("""
     thead tr th:first-child {
         width: 50px !important;
         text-align: center !important;
+        background-color: #E8EAED !important;
+    }
+    
+    tbody tr td:first-child {
+        background-color: #FFFFFF !important;
+    }
+    
+    tbody tr:hover td:first-child {
+        background-color: #F0F7FA !important;
     }
     
     /* Contenedor de dataframe con sombra y BORDE VISIBLE */
@@ -150,6 +172,17 @@ st.markdown("""
         min-height: 42px !important;
     }
     
+    /* OCULTAR LOS CHIPS COMPLETAMENTE */
+    div[data-baseweb="select"] span[data-baseweb="tag"] {
+        display: none !important;
+    }
+    
+    /* Mostrar solo el placeholder cuando hay selecciones */
+    div[data-baseweb="select"] > div > div {
+        display: flex !important;
+        align-items: center !important;
+    }
+    
     /* Texto del placeholder */
     div[data-baseweb="select"] input {
         color: #666 !important;
@@ -179,31 +212,6 @@ st.markdown("""
         background-color: #e8f4f8 !important;
     }
     
-    /* CHIPS de elementos seleccionados - GRIS CLARO */
-    span[data-baseweb="tag"] {
-        background-color: #e8e8e8 !important;
-        color: #333 !important;
-        border: 1px solid #d0d0d0 !important;
-        border-radius: 16px !important;
-        padding: 4px 12px !important;
-        font-size: 13px !important;
-    }
-    
-    /* Botón X en los chips */
-    span[data-baseweb="tag"] svg {
-        fill: #666 !important;
-    }
-    
-    span[data-baseweb="tag"]:hover {
-        background-color: #d8d8d8 !important;
-    }
-    
-    /* Ocultar chips individuales cuando hay múltiples seleccionados */
-    div[data-baseweb="select"] > div > div:first-child {
-        max-width: 100%;
-        overflow: hidden;
-    }
-    
     /* Texto dentro del multiselect */
     div[data-baseweb="select"] span {
         color: #666 !important;
@@ -219,22 +227,22 @@ st.markdown("""
     /* Títulos */
     h1 {
         color: #333 !important;
-        font-size: 22px !important;
-        font-weight: 400 !important;
+        font-size: 26px !important;
+        font-weight: 600 !important;
         margin-bottom: 1rem !important;
     }
     
     h3 {
-        color: #888 !important;
-        font-size: 18px !important;
-        font-weight: 400 !important;
+        color: #555 !important;
+        font-size: 20px !important;
+        font-weight: 600 !important;
         margin: 1rem 0 !important;
     }
     
     h4 {
-        color: #5F6B75 !important;
-        font-size: 15px !important;
-        font-weight: 400 !important;
+        color: #555 !important;
+        font-size: 16px !important;
+        font-weight: 600 !important;
     }
     
     /* Contenedor de dataframe */
@@ -537,12 +545,11 @@ with filter_cols[0]:
         key='filter_profesor', 
         placeholder="Profesor",
         default=st.session_state['filter_profesor'],
-        label_visibility="visible"
+        label_visibility="collapsed",
+        max_selections=None
     )
-    if len(selected_profesor) > 1:
-        st.caption(f"✓ {len(selected_profesor)} seleccionados")
-    elif len(selected_profesor) == 1:
-        st.caption(f"✓ {selected_profesor[0]}")
+    if len(selected_profesor) > 0:
+        st.markdown(f"<div style='background-color: #e8f4f8; padding: 4px 12px; border-radius: 12px; text-align: center; font-size: 12px; color: #333; font-weight: 500;'>{len(selected_profesor)} seleccionado{'s' if len(selected_profesor) > 1 else ''}</div>", unsafe_allow_html=True)
         
 with filter_cols[1]:
     selected_campus = st.multiselect(
@@ -551,12 +558,10 @@ with filter_cols[1]:
         key='filter_campus', 
         placeholder="Campus",
         default=st.session_state['filter_campus'],
-        label_visibility="visible"
+        label_visibility="collapsed"
     )
-    if len(selected_campus) > 1:
-        st.caption(f"✓ {len(selected_campus)} seleccionados")
-    elif len(selected_campus) == 1:
-        st.caption(f"✓ {selected_campus[0]}")
+    if len(selected_campus) > 0:
+        st.markdown(f"<div style='background-color: #e8f4f8; padding: 4px 12px; border-radius: 12px; text-align: center; font-size: 12px; color: #333; font-weight: 500;'>{len(selected_campus)} seleccionado{'s' if len(selected_campus) > 1 else ''}</div>", unsafe_allow_html=True)
         
 with filter_cols[2]:
     selected_escolaridad = st.multiselect(
@@ -565,12 +570,10 @@ with filter_cols[2]:
         key='filter_escolaridad', 
         placeholder="Escolaridad",
         default=st.session_state['filter_escolaridad'],
-        label_visibility="visible"
+        label_visibility="collapsed"
     )
-    if len(selected_escolaridad) > 1:
-        st.caption(f"✓ {len(selected_escolaridad)} seleccionados")
-    elif len(selected_escolaridad) == 1:
-        st.caption(f"✓ {selected_escolaridad[0]}")
+    if len(selected_escolaridad) > 0:
+        st.markdown(f"<div style='background-color: #e8f4f8; padding: 4px 12px; border-radius: 12px; text-align: center; font-size: 12px; color: #333; font-weight: 500;'>{len(selected_escolaridad)} seleccionado{'s' if len(selected_escolaridad) > 1 else ''}</div>", unsafe_allow_html=True)
         
 with filter_cols[3]:
     selected_grado = st.multiselect(
@@ -579,12 +582,10 @@ with filter_cols[3]:
         key='filter_grado', 
         placeholder="Grado",
         default=st.session_state['filter_grado'],
-        label_visibility="visible"
+        label_visibility="collapsed"
     )
-    if len(selected_grado) > 1:
-        st.caption(f"✓ {len(selected_grado)} seleccionados")
-    elif len(selected_grado) == 1:
-        st.caption(f"✓ {selected_grado[0]}")
+    if len(selected_grado) > 0:
+        st.markdown(f"<div style='background-color: #e8f4f8; padding: 4px 12px; border-radius: 12px; text-align: center; font-size: 12px; color: #333; font-weight: 500;'>{len(selected_grado)} seleccionado{'s' if len(selected_grado) > 1 else ''}</div>", unsafe_allow_html=True)
         
 with filter_cols[4]:
     selected_grupo = st.multiselect(
@@ -593,12 +594,10 @@ with filter_cols[4]:
         key='filter_grupo', 
         placeholder="Grupo",
         default=st.session_state['filter_grupo'],
-        label_visibility="visible"
+        label_visibility="collapsed"
     )
-    if len(selected_grupo) > 1:
-        st.caption(f"✓ {len(selected_grupo)} seleccionados")
-    elif len(selected_grupo) == 1:
-        st.caption(f"✓ {selected_grupo[0]}")
+    if len(selected_grupo) > 0:
+        st.markdown(f"<div style='background-color: #e8f4f8; padding: 4px 12px; border-radius: 12px; text-align: center; font-size: 12px; color: #333; font-weight: 500;'>{len(selected_grupo)} seleccionado{'s' if len(selected_grupo) > 1 else ''}</div>", unsafe_allow_html=True)
         
 with filter_cols[5]:
     selected_materia = st.multiselect(
@@ -607,26 +606,22 @@ with filter_cols[5]:
         key='filter_materia', 
         placeholder="Materia",
         default=st.session_state['filter_materia'],
-        label_visibility="visible"
+        label_visibility="collapsed"
     )
-    if len(selected_materia) > 1:
-        st.caption(f"✓ {len(selected_materia)} seleccionados")
-    elif len(selected_materia) == 1:
-        st.caption(f"✓ {selected_materia[0]}")
+    if len(selected_materia) > 0:
+        st.markdown(f"<div style='background-color: #e8f4f8; padding: 4px 12px; border-radius: 12px; text-align: center; font-size: 12px; color: #333; font-weight: 500;'>{len(selected_materia)} seleccionado{'s' if len(selected_materia) > 1 else ''}</div>", unsafe_allow_html=True)
         
 with filter_cols[6]:
     selected_periodo = st.multiselect(
-        "Periodo: 2025-10", 
+        "Periodo", 
         df['periodo'].unique(), 
         key='filter_periodo', 
-        placeholder="Periodo",
+        placeholder="Periodo: 2025-10",
         default=st.session_state['filter_periodo'],
-        label_visibility="visible"
+        label_visibility="collapsed"
     )
-    if len(selected_periodo) > 1:
-        st.caption(f"✓ {len(selected_periodo)} seleccionados")
-    elif len(selected_periodo) == 1:
-        st.caption(f"✓ {selected_periodo[0]}")
+    if len(selected_periodo) > 0:
+        st.markdown(f"<div style='background-color: #e8f4f8; padding: 4px 12px; border-radius: 12px; text-align: center; font-size: 12px; color: #333; font-weight: 500;'>{len(selected_periodo)} seleccionado{'s' if len(selected_periodo) > 1 else ''}</div>", unsafe_allow_html=True)
 
 # Aplicar filtros
 df_filtered = df.copy()
@@ -746,7 +741,7 @@ if st.session_state.view_mode == 'dashboard':
 
         with col_table:
             st.markdown("<h3 style='color: #888; margin-bottom: 0.8rem;'>Lista de profesores</h3>", unsafe_allow_html=True)
-            st.caption("Haz clic en el checkbox para ver actividades del profesor")
+            st.caption("Selecciona uno o más profesores para ver sus actividades")
             
             # Agrupar y formatear datos
             df_display = df_filtered.groupby(['profesor', 'campus']).agg({
@@ -779,7 +774,7 @@ if st.session_state.view_mode == 'dashboard':
                 df_display,
                 use_container_width=True,
                 hide_index=True,
-                height=280,
+                height=240,
                 key="tabla_profesores_editor",
                 column_config={
                     "✓": st.column_config.CheckboxColumn(
@@ -791,12 +786,23 @@ if st.session_state.view_mode == 'dashboard':
                 disabled=["Profesor", "Campus", "Tareas", "Recursos", "Temas", "Foros"]
             )
             
-            # Si hay algún profesor seleccionado en la tabla, usar query params para actualizar
+            # Obtener profesores seleccionados
             selected_from_table = edited_df[edited_df['✓'] == True]['Profesor'].tolist()
-            if selected_from_table and selected_from_table != selected_profesor:
-                # Usar session_state con un key diferente para evitar conflictos
-                st.session_state['_temp_selected_profs'] = selected_from_table
-                st.rerun()
+            
+            # Botón para ver actividades - alineado a la derecha
+            col_empty, col_btn = st.columns([4, 1])
+            with col_btn:
+                if len(selected_from_table) > 0:
+                    if st.button(f"Ver actividades", 
+                               key="btn_ver_actividades", 
+                               use_container_width=True):
+                        st.session_state['_temp_selected_profs'] = selected_from_table
+                        st.rerun()
+                else:
+                    st.button("Ver actividades", 
+                             key="btn_ver_actividades_disabled", 
+                             use_container_width=True,
+                             disabled=True)
 
         with col_side:
             st.markdown("<h4 style='text-align: center; color: #888; font-size: 13px; font-weight: 400; margin-bottom: 1rem;'>Tiempo promedio para<br>responder mensajes</h4>", unsafe_allow_html=True)
