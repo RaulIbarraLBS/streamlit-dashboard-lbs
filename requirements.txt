@@ -1,4 +1,4 @@
-streamlit>=1.33.0  <-- IMPORTANTE: Versión mínima para usar st.popover
+streamlit>=1.33.0 
 streamlit-aggrid>=0.3.4
 pandas>=2.0.0
 numpy>=1.24.0
