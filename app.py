@@ -12,7 +12,7 @@ st.set_page_config(
     initial_sidebar_state="collapsed"
 )
 
-# --- CSS PERSONALIZADO ---
+# --- CSS PERSONALIZADO (SOLO SE AGREGARON SOMBRAS AQUÍ) ---
 st.markdown("""
 <style>
     /* FORZAR FONDO BLANCO */
@@ -26,6 +26,7 @@ st.markdown("""
     
     [data-testid="stHeader"] {
         background-color: #FFFFFF !important;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.05) !important; /* Sombra sutil en header */
     }
     
     /* Forzar textos oscuros */
@@ -49,14 +50,15 @@ st.markdown("""
         padding-right: 2rem !important;
     }
 
-    /* Métricas más compactas */
+    /* --- MÉTRICAS CON SOMBRA --- */
     div[data-testid="stMetric"] {
         background-color: white !important;
         border: 1px solid #d0d0d0 !important;
         border-radius: 12px !important;
         padding: 16px 12px !important;
         text-align: center !important;
-        box-shadow: 0 2px 4px rgba(0,0,0,0.08) !important;
+        /* SOMBRA AGREGADA */
+        box-shadow: 0 4px 6px rgba(0,0,0,0.1) !important; 
     }
     
     div[data-testid="stMetric"] label {
@@ -71,7 +73,7 @@ st.markdown("""
         color: #333 !important;
     }
 
-    /* Botones */
+    /* --- BOTONES CON SOMBRA --- */
     div.stButton > button {
         background-color: #5F6B75 !important;
         color: white !important;
@@ -81,6 +83,8 @@ st.markdown("""
         font-size: 14px !important;
         font-weight: 500 !important;
         transition: all 0.2s !important;
+        /* SOMBRA AGREGADA */
+        box-shadow: 0 4px 6px rgba(0,0,0,0.2) !important;
     }
     
     div.stButton > button p {
@@ -89,16 +93,19 @@ st.markdown("""
     
     div.stButton > button:hover {
         background-color: #4b545c !important;
-        box-shadow: 0 2px 8px rgba(0,0,0,0.15) !important;
+        box-shadow: 0 6px 12px rgba(0,0,0,0.25) !important;
+        transform: translateY(-1px);
     }
     
-    /* Filtros multiselect - MÁS CLAROS */
+    /* --- FILTROS (SELECTORES) CON SOMBRA --- */
     div[data-baseweb="select"] > div {
         background-color: #FFFFFF !important;
         border-radius: 8px !important;
         border: 1px solid #d0d0d0 !important;
         min-height: 42px !important;
         color: #333 !important;
+        /* SOMBRA AGREGADA */
+        box-shadow: 0 2px 4px rgba(0,0,0,0.05) !important;
     }
     
     /* Placeholder visible */
@@ -128,13 +135,14 @@ st.markdown("""
         fill: #1976d2 !important;
     }
     
-    /* Dropdown menu */
+    /* Dropdown menu (La lista que se abre) CON SOMBRA */
     ul[role="listbox"] {
         background-color: white !important;
         border: 1px solid #d0d0d0 !important;
         border-radius: 8px !important;
-        box-shadow: 0 4px 12px rgba(0,0,0,0.1) !important;
         padding: 8px 0 !important;
+        /* SOMBRA AGREGADA */
+        box-shadow: 0 8px 16px rgba(0,0,0,0.15) !important;
     }
     
     li[role="option"] {
@@ -194,31 +202,50 @@ st.markdown("""
         color: #666 !important;
     }
     
-    /* DataFrame */
+    /* --- DATAFRAME / TABLAS CON SOMBRA --- */
     [data-testid="stDataFrame"] {
         background-color: white !important;
         border: 1px solid #d0d0d0 !important;
         border-radius: 8px !important;
         overflow: hidden !important;
-        box-shadow: 0 2px 4px rgba(0,0,0,0.08) !important;
+        /* SOMBRA AGREGADA */
+        box-shadow: 0 4px 6px rgba(0,0,0,0.05) !important;
     }
     
-    /* Gráficas Plotly */
+    /* --- GRÁFICAS PLOTLY CON SOMBRA --- */
     div[data-testid="stPlotlyChart"] > div {
         border-radius: 12px !important;
-        box-shadow: 0 2px 4px rgba(0,0,0,0.1) !important;
         overflow: hidden !important;
         background-color: white !important;
+        border: 1px solid #e0e0e0 !important;
+        /* SOMBRA AGREGADA */
+        box-shadow: 0 4px 6px rgba(0,0,0,0.08) !important;
     }
     
-    /* Spinner de carga mejorado */
-    div[data-testid="stSpinner"] > div {
-        border-color: #1976d2 !important;
-    }
-    
+/* Spinner de carga elegante y centrado */
     div[data-testid="stSpinner"] {
+        position: fixed;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        z-index: 9999;
+        background-color: rgba(255, 255, 255, 0.9);
+        padding: 40px;
+        border-radius: 20px;
+        box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+        border: 1px solid #e0e0e0;
         text-align: center;
-        padding: 3rem;
+        min-width: 300px;
+        backdrop-filter: blur(5px); /* Efecto vidrio borroso */
+    }
+    
+    /* Color del circulito de carga */
+    div[data-testid="stSpinner"] > div {
+        border-top-color: #5F6B75 !important; /* Tu color gris corporativo */
+        border-right-color: transparent !important;
+        border-bottom-color: transparent !important;
+        border-left-color: transparent !important;
+        border-width: 4px !important;
     }
     
     div[data-testid="stStatusWidget"] {
@@ -244,7 +271,7 @@ def get_bigquery_client():
         st.error(f"Error conectando a BigQuery: {e}")
         return None
 
-@st.cache_data(ttl=300)
+@st.cache_data(ttl=300, show_spinner=False) 
 def get_data():
     """Carga datos de la vista maestra"""
     try:
@@ -493,7 +520,7 @@ for key in filter_keys:
 
 # ==================== CARGAR DATOS ====================
 
-with st.spinner("🔄 Cargando datos del dashboard..."):
+with st.spinner("Cargando datos del dashboard..."):
     df = get_data()
 
 if df.empty:
@@ -507,25 +534,15 @@ if 'initialized' not in st.session_state:
         st.session_state['filter_periodo'] = [periodos_disponibles[0]]
     st.session_state['initialized'] = True
 
-# ==================== HEADER ====================
+# ==================== HEADER (MODIFICADO) ====================
 
-col_title, col_spacer, col_clear = st.columns([5, 3, 1.1])
-
-with col_title:
-    st.markdown("<h1 style='margin-bottom: 0;'>Reporte de estadísticas de app LBS+</h1>", unsafe_allow_html=True)
-
-with col_clear:
-    if st.button("Borrar filtros", width="stretch", key="btn_clear"):
-        for key in filter_keys:
-            st.session_state[key] = []
-        st.rerun()
-
+# Se eliminó el botón de aquí para moverlo a los filtros
+st.markdown("<h1 style='margin-bottom: 0;'>Reporte de estadísticas de app LBS+</h1>", unsafe_allow_html=True)
 st.markdown("<br>", unsafe_allow_html=True)
 
-# ==================== FILTROS DINÁMICOS (CASCADA) ====================
+# ==================== FILTROS DINÁMICOS (CASCADA) + BOTÓN ====================
 
 # 1. Definir qué columnas usa cada filtro para mapear
-# (Clave del session_state : Nombre real de la columna en el DataFrame)
 mapa_filtros = {
     'filter_profesor': 'profesor',
     'filter_campus': 'campus',
@@ -538,151 +555,99 @@ mapa_filtros = {
 
 # 2. Función para calcular opciones disponibles
 def obtener_opciones_validas(df_total, columna_objetivo, mapa_filtros):
-    """
-    Filtra el DF basándose en TODAS las selecciones actuales EXCEPTO
-    la de la columna que estamos calculando (para no restringirse a sí mismo).
-    """
     df_temp = df_total.copy()
-    
     for key, col in mapa_filtros.items():
-        # Si no es la columna actual Y hay algo seleccionado en ese filtro
         if col != columna_objetivo and st.session_state[key]:
             df_temp = df_temp[df_temp[col].isin(st.session_state[key])]
-            
-    lista_opciones = sorted(df_temp[columna_objetivo].unique())
-    return lista_opciones
+    return sorted(df_temp[columna_objetivo].unique())
 
-# 3. Renderizar Filtros con opciones inteligentes
-filter_cols = st.columns(7)
+# 3. Renderizar Filtros (AHORA SON 8 COLUMNAS PARA INCLUIR EL BOTÓN)
+# Usamos vertical_alignment="bottom" para que el botón se alinee con los selectores
+filter_cols = st.columns([1, 1, 1, 1, 1, 1, 1, 0.6], gap="small", vertical_alignment="bottom")
 
 # --- FILTRO PROFESOR ---
 with filter_cols[0]:
-    # Calculamos opciones válidas según lo que hayas elegido en Campus, Materia, etc.
     opciones = obtener_opciones_validas(df, 'profesor', mapa_filtros)
-    
-    # TRUCO ANTIGUO ERROR: Asegurar que lo seleccionado siga en las opciones
-    # (Si filtras algo que excluye tu selección actual, la agregamos para que no truene)
     seleccion_actual = st.session_state['filter_profesor']
     opciones_finales = sorted(list(set(opciones + seleccion_actual)))
-    
-    selected_profesor = st.multiselect(
-        "Profesor",
-        options=opciones_finales,
-        default=seleccion_actual,
-        placeholder="Profesor",
-        label_visibility="collapsed",
-        key='filter_profesor'
-    )
+    st.multiselect("Profesor", options=opciones_finales, default=seleccion_actual, placeholder="Profesor", label_visibility="collapsed", key='filter_profesor')
 
 # --- FILTRO CAMPUS ---
 with filter_cols[1]:
     opciones = obtener_opciones_validas(df, 'campus', mapa_filtros)
     seleccion_actual = st.session_state['filter_campus']
     opciones_finales = sorted(list(set(opciones + seleccion_actual)))
-    
-    selected_campus = st.multiselect(
-        "Campus",
-        options=opciones_finales,
-        default=seleccion_actual,
-        placeholder="Campus",
-        label_visibility="collapsed",
-        key='filter_campus'
-    )
+    st.multiselect("Campus", options=opciones_finales, default=seleccion_actual, placeholder="Campus", label_visibility="collapsed", key='filter_campus')
 
 # --- FILTRO ESCOLARIDAD ---
 with filter_cols[2]:
     opciones = obtener_opciones_validas(df, 'escolaridad', mapa_filtros)
     seleccion_actual = st.session_state['filter_escolaridad']
     opciones_finales = sorted(list(set(opciones + seleccion_actual)))
-    
-    selected_escolaridad = st.multiselect(
-        "Escolaridad",
-        options=opciones_finales,
-        default=seleccion_actual,
-        placeholder="Escolaridad",
-        label_visibility="collapsed",
-        key='filter_escolaridad'
-    )
+    st.multiselect("Escolaridad", options=opciones_finales, default=seleccion_actual, placeholder="Escolaridad", label_visibility="collapsed", key='filter_escolaridad')
 
 # --- FILTRO GRADO ---
 with filter_cols[3]:
     opciones = obtener_opciones_validas(df, 'grado', mapa_filtros)
     seleccion_actual = st.session_state['filter_grado']
     opciones_finales = sorted(list(set(opciones + seleccion_actual)))
-    
-    selected_grado = st.multiselect(
-        "Grado",
-        options=opciones_finales,
-        default=seleccion_actual,
-        placeholder="Grado",
-        label_visibility="collapsed",
-        key='filter_grado'
-    )
+    st.multiselect("Grado", options=opciones_finales, default=seleccion_actual, placeholder="Grado", label_visibility="collapsed", key='filter_grado')
 
 # --- FILTRO GRUPO ---
 with filter_cols[4]:
     opciones = obtener_opciones_validas(df, 'grupo', mapa_filtros)
     seleccion_actual = st.session_state['filter_grupo']
     opciones_finales = sorted(list(set(opciones + seleccion_actual)))
-    
-    selected_grupo = st.multiselect(
-        "Grupo",
-        options=opciones_finales,
-        default=seleccion_actual,
-        placeholder="Grupo",
-        label_visibility="collapsed",
-        key='filter_grupo'
-    )
+    st.multiselect("Grupo", options=opciones_finales, default=seleccion_actual, placeholder="Grupo", label_visibility="collapsed", key='filter_grupo')
 
 # --- FILTRO MATERIA ---
 with filter_cols[5]:
     opciones = obtener_opciones_validas(df, 'materia', mapa_filtros)
     seleccion_actual = st.session_state['filter_materia']
     opciones_finales = sorted(list(set(opciones + seleccion_actual)))
-    
-    selected_materia = st.multiselect(
-        "Materia",
-        options=opciones_finales,
-        default=seleccion_actual,
-        placeholder="Materia",
-        label_visibility="collapsed",
-        key='filter_materia'
-    )
+    st.multiselect("Materia", options=opciones_finales, default=seleccion_actual, placeholder="Materia", label_visibility="collapsed", key='filter_materia')
 
 # --- FILTRO PERIODO ---
 with filter_cols[6]:
-    # El periodo tiene un tratamiento especial para mantener el orden reverso (más nuevo arriba)
     opciones = obtener_opciones_validas(df, 'periodo', mapa_filtros)
     seleccion_actual = st.session_state.get('filter_periodo', [])
     opciones_finales = sorted(list(set(opciones + seleccion_actual)), reverse=True)
-    
-    selected_periodo = st.multiselect(
-        "Periodo",
-        options=opciones_finales,
-        default=seleccion_actual,
-        placeholder="Periodo",
-        label_visibility="collapsed",
-        key='filter_periodo'
+    st.multiselect("Periodo", options=opciones_finales, default=seleccion_actual, placeholder="Periodo", label_visibility="collapsed", key='filter_periodo')
+
+# --- BOTÓN BORRAR FILTROS---
+# Definimos la función de limpieza justo aquí
+def limpiar_filtros_callback():
+    for key in filter_keys:
+        if key in st.session_state:
+            st.session_state[key] = []
+
+with filter_cols[7]:
+    # Usamos on_click para que se ejecute ANTES de renderizar los widgets
+    st.button(
+        "Borrar filtros", 
+        width="stretch", 
+        key="btn_clear", 
+        on_click=limpiar_filtros_callback
     )
 
 # Aplicar filtros
 df_filtered = df.copy()
-if selected_profesor: df_filtered = df_filtered[df_filtered['profesor'].isin(selected_profesor)]
-if selected_campus: df_filtered = df_filtered[df_filtered['campus'].isin(selected_campus)]
-if selected_escolaridad: df_filtered = df_filtered[df_filtered['escolaridad'].isin(selected_escolaridad)]
-if selected_grado: df_filtered = df_filtered[df_filtered['grado'].isin(selected_grado)]
-if selected_grupo: df_filtered = df_filtered[df_filtered['grupo'].isin(selected_grupo)]
-if selected_materia: df_filtered = df_filtered[df_filtered['materia'].isin(selected_materia)]
-if selected_periodo: df_filtered = df_filtered[df_filtered['periodo'].isin(selected_periodo)]
+if st.session_state['filter_profesor']: df_filtered = df_filtered[df_filtered['profesor'].isin(st.session_state['filter_profesor'])]
+if st.session_state['filter_campus']: df_filtered = df_filtered[df_filtered['campus'].isin(st.session_state['filter_campus'])]
+if st.session_state['filter_escolaridad']: df_filtered = df_filtered[df_filtered['escolaridad'].isin(st.session_state['filter_escolaridad'])]
+if st.session_state['filter_grado']: df_filtered = df_filtered[df_filtered['grado'].isin(st.session_state['filter_grado'])]
+if st.session_state['filter_grupo']: df_filtered = df_filtered[df_filtered['grupo'].isin(st.session_state['filter_grupo'])]
+if st.session_state['filter_materia']: df_filtered = df_filtered[df_filtered['materia'].isin(st.session_state['filter_materia'])]
+if st.session_state['filter_periodo']: df_filtered = df_filtered[df_filtered['periodo'].isin(st.session_state['filter_periodo'])]
 
 st.markdown("<br>", unsafe_allow_html=True)
 
 # Título campus
 campus_titulo = "Todos los campus"
-if len(selected_campus) == 1:
-    campus_titulo = f"Campus: {selected_campus[0]}"
-elif len(selected_campus) > 1:
-    campus_titulo = f"{len(selected_campus)} campus seleccionados"
+if len(st.session_state['filter_campus']) == 1:
+    campus_titulo = f"Campus: {st.session_state['filter_campus'][0]}"
+elif len(st.session_state['filter_campus']) > 1:
+    campus_titulo = f"{len(st.session_state['filter_campus'])} campus seleccionados"
 
 st.markdown(f"<h3 style='text-align: center; color: #888; font-weight: 400;'>{campus_titulo}</h3>", unsafe_allow_html=True)
 st.markdown("<br>", unsafe_allow_html=True)
@@ -732,7 +697,7 @@ st.markdown("<br>", unsafe_allow_html=True)
 # ==================== CONTENIDO PRINCIPAL ====================
 
 # Si hay profesor seleccionado: mostrar gráfica
-if selected_profesor:
+if st.session_state['filter_profesor']:
     col_chart_main, col_side = st.columns([3.2, 1], gap="medium")
     
     with col_chart_main:
@@ -741,10 +706,10 @@ if selected_profesor:
         col_info, col_tipo, col_btn_clear = st.columns([2, 1.5, 1])
         
         with col_info:
-            if len(selected_profesor) == 1:
-                st.markdown(f"<p style='font-size: 14px; line-height: 38px;'>📊 Mostrando: <strong>{selected_profesor[0]}</strong></p>", unsafe_allow_html=True)
+            if len(st.session_state['filter_profesor']) == 1:
+                st.markdown(f"<p style='font-size: 14px; line-height: 38px;'>📊 Mostrando: <strong>{st.session_state['filter_profesor'][0]}</strong></p>", unsafe_allow_html=True)
             else:
-                st.markdown(f"<p style='font-size: 14px; line-height: 38px;'>📊 Mostrando: <strong>{len(selected_profesor)} profesores</strong></p>", unsafe_allow_html=True)
+                st.markdown(f"<p style='font-size: 14px; line-height: 38px;'>📊 Mostrando: <strong>{len(st.session_state['filter_profesor'])} profesores</strong></p>", unsafe_allow_html=True)
         
         with col_tipo:
             # Selector de tipo de actividad
@@ -762,7 +727,7 @@ if selected_profesor:
         
         # Gráfica con datos REALES usando periodos seleccionados
         st.plotly_chart(
-            plot_activity_timeline(selected_profesor, activity_type, selected_periodo),
+            plot_activity_timeline(st.session_state['filter_profesor'], activity_type, st.session_state.get('filter_periodo')),
             width="stretch",
             config={'displayModeBar': False},
             key="chart_actividades"
@@ -841,12 +806,13 @@ else:
         
         grid_options = gb.build()
         
-        # Estilos personalizados estilo Looker Studio
+        # Estilos personalizados estilo Looker Studio (AHORA CON SOMBRA)
         custom_css = {
             ".ag-root-wrapper": {
                 "border": "1px solid #d0d0d0",
                 "border-radius": "8px",
-                "overflow": "hidden"
+                "overflow": "hidden",
+                "box-shadow": "0 4px 6px rgba(0,0,0,0.05)" # Sombra AgGrid
             },
             ".ag-header": {
                 "background-color": "#6B7680",
