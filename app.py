@@ -16,13 +16,21 @@ st.set_page_config(
 st.markdown("""
 <style>
 
-    /* Para iframe - eliminar márgenes */
-    html, body {
-        margin: 0 !important;
-        padding: 0 !important;
-        overflow-x: hidden !important;
-    }
-    
+/* === AJUSTE PARA IFRAME 1500x750 === */
+html {
+    zoom: 0.82; /* Reduce TODO al 82% */
+}
+
+body, .stApp {
+    margin: 0 !important;
+    padding: 0 !important;
+    overflow: hidden !important;
+}
+
+.block-container {
+    padding: 0.5rem 1rem !important;
+    max-width: 100% !important;
+}    
     /* Forzar que todo quepa sin scroll */
         body {
             overflow: hidden !important;
@@ -674,7 +682,6 @@ if st.session_state['filter_grupo']: df_filtered = df_filtered[df_filtered['grup
 if st.session_state['filter_materia']: df_filtered = df_filtered[df_filtered['materia'].isin(st.session_state['filter_materia'])]
 if st.session_state['filter_periodo']: df_filtered = df_filtered[df_filtered['periodo'].isin(st.session_state['filter_periodo'])]
 
-st.markdown("<br>", unsafe_allow_html=True)
 
 # Título campus
 campus_titulo = "Todos los campus"
@@ -729,7 +736,7 @@ with k4:
 
 # Si hay profesor seleccionado: mostrar gráfica
 if st.session_state['filter_profesor']:
-    col_chart_main, col_side = st.columns([3.2, 1], gap="medium")
+    col_chart_main, col_side = st.columns([3.5, 1], gap="small")
     
     with col_chart_main:
         st.markdown("<h3 style='margin-bottom: 0.8rem;'>Actividades a lo largo del tiempo</h3>", unsafe_allow_html=True)
