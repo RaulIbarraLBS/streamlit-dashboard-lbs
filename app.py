@@ -15,6 +15,29 @@ st.set_page_config(
 # --- CSS PERSONALIZADO (SOLO SE AGREGARON SOMBRAS AQUÍ) ---
 st.markdown("""
 <style>
+
+    /* Para iframe - eliminar márgenes */
+    html, body {
+        margin: 0 !important;
+        padding: 0 !important;
+        overflow-x: hidden !important;
+    }
+    
+    /* Forzar que todo quepa sin scroll */
+        body {
+            overflow: hidden !important;
+        }
+
+        .stApp {
+            overflow: hidden !important;
+        }
+        
+        /* Escalar contenido para que quepa en 750px */
+        .stApp {
+            transform: scale(0.85);
+            transform-origin: top center;
+            height: 882px; /* 750 / 0.85 */
+        }
     /* FORZAR FONDO BLANCO */
     .stApp {
         background-color: #F5F5F5 !important;
@@ -27,6 +50,17 @@ st.markdown("""
     [data-testid="stHeader"] {
         background-color: #FFFFFF !important;
         box-shadow: 0 2px 4px rgba(0,0,0,0.05) !important; /* Sombra sutil en header */
+    }
+    
+    /* Reducir header de Streamlit */
+    [data-testid="stHeader"] {
+        height: 0 !important;
+        min-height: 0 !important;
+    }
+
+    /* Toolbar invisible */
+    [data-testid="stToolbar"] {
+        display: none !important;
     }
     
     /* Forzar textos oscuros */
@@ -649,15 +683,13 @@ if len(st.session_state['filter_campus']) == 1:
 elif len(st.session_state['filter_campus']) > 1:
     campus_titulo = f"{len(st.session_state['filter_campus'])} campus seleccionados"
 
-st.markdown(f"<h3 style='text-align: center; color: #888; font-weight: 400;'>{campus_titulo}</h3>", unsafe_allow_html=True)
-st.markdown("<br>", unsafe_allow_html=True)
-
+st.markdown(f"<h3 style='text-align: center; color: #888; font-weight: 400; font-size: 16px; margin: 0.5rem 0;'>{campus_titulo}</h3>", unsafe_allow_html=True)
 # ==================== KPIS ====================
 
-k1, k2, k3, k4 = st.columns(4, gap="medium")
+k1, k2, k3, k4 = st.columns(4, gap="small")
 
 with k1:
-    st.markdown("<h4 style='text-align: center; color: #5F6B75; margin-bottom: 0.5rem;'>Tareas</h4>", unsafe_allow_html=True)
+    st.markdown("<h4 style='text-align: center; color: #5F6B75; margin-bottom: 0.2rem; font-size: 14px;'>Tareas</h4>", unsafe_allow_html=True)
     st.plotly_chart(
         plot_gauge(df_filtered['progreso_tareas'].mean(), "Tareas"),
         width="stretch",
@@ -666,7 +698,7 @@ with k1:
     )
 
 with k2:
-    st.markdown("<h4 style='text-align: center; color: #5F6B75; margin-bottom: 0.5rem;'>Foros</h4>", unsafe_allow_html=True)
+    st.markdown("<h4 style='text-align: center; color: #5F6B75; margin-bottom: 0.2rem; font-size: 14px;'>Foros</h4>", unsafe_allow_html=True)
     st.plotly_chart(
         plot_gauge(df_filtered['progreso_foros'].mean(), "Foros"),
         width="stretch",
@@ -675,7 +707,7 @@ with k2:
     )
 
 with k3:
-    st.markdown("<h4 style='text-align: center; color: #5F6B75; margin-bottom: 0.5rem;'>Recursos</h4>", unsafe_allow_html=True)
+    st.markdown("<h4 style='text-align: center; color: #5F6B75; margin-bottom: 0.2rem; font-size: 14px;'>Recursos</h4>", unsafe_allow_html=True)
     st.plotly_chart(
         plot_gauge(df_filtered['progreso_recursos'].mean(), "Recursos"),
         width="stretch",
@@ -684,7 +716,7 @@ with k3:
     )
 
 with k4:
-    st.markdown("<h4 style='text-align: center; color: #5F6B75; margin-bottom: 0.5rem;'>Temas</h4>", unsafe_allow_html=True)
+    st.markdown("<h4 style='text-align: center; color: #5F6B75; margin-bottom: 0.2rem; font-size: 14px;'>Temas</h4>", unsafe_allow_html=True)
     st.plotly_chart(
         plot_gauge(df_filtered['progreso_temas'].mean(), "Temas"),
         width="stretch",
@@ -692,7 +724,6 @@ with k4:
         key="gauge_temas"
     )
 
-st.markdown("<br>", unsafe_allow_html=True)
 
 # ==================== CONTENIDO PRINCIPAL ====================
 
@@ -737,11 +768,9 @@ if st.session_state['filter_profesor']:
         st.markdown("<h3 style='text-align: center; font-size: 15px; font-weight: 700; margin-bottom: 0.8rem; margin-top: 0;'>Tiempo promedio para responder mensajes</h3>", unsafe_allow_html=True)
         
         st.metric("En horas", f"{int(df_filtered['horas_respuesta'].mean())}")
-        st.markdown("<div style='margin: 0.5rem 0;'></div>", unsafe_allow_html=True)
-        
+        st.markdown("<div style='margin: 0.2rem 0;'></div>", unsafe_allow_html=True)        
         st.metric("En minutos", f"{int(df_filtered['minutos_respuesta'].mean())}")
-        st.markdown("<div style='margin: 0.5rem 0;'></div>", unsafe_allow_html=True)
-        
+        st.markdown("<div style='margin: 0.2rem 0;'></div>", unsafe_allow_html=True)        
         # Calcular conversaciones pendientes correctamente
         # Dividir cada fila por sus duplicadas ANTES de sumar
         df_conversaciones = df_filtered[['conversaciones_pendientes', 'num_filas_duplicadas']].copy()
@@ -751,7 +780,7 @@ if st.session_state['filter_profesor']:
 
 # Sin profesor: mostrar tabla
 else:
-    col_table, col_side = st.columns([3.2, 1], gap="medium")
+    col_table, col_side = st.columns([3.5, 1], gap="small")
     
     with col_table:
         st.markdown("<h3 style='margin-bottom: 0.8rem;'>Lista de profesores</h3>", unsafe_allow_html=True)
@@ -799,10 +828,10 @@ else:
         gb.configure_grid_options(
             domLayout='normal',
             enableRangeSelection=False,
-            rowHeight=42,
-            headerHeight=45,
+            rowHeight=36,
+            headerHeight=40,
             suppressRowClickSelection=True
-        )
+            )
         
         grid_options = gb.build()
         
@@ -837,9 +866,9 @@ else:
             },
             ".ag-cell": {
                 "color": "#5F6368",
-                "font-size": "13px",
+                "font-size": "12px",
                 "border": "none",
-                "line-height": "42px"
+                "line-height": "38px"
             },
             ".ag-row-hover": {
                 "background-color": "#E8F4F8 !important"
@@ -890,11 +919,9 @@ else:
         st.markdown("<h3 style='text-align: center; font-size: 15px; font-weight: 700; margin-bottom: 0.8rem; margin-top: 0;'>Tiempo promedio para responder mensajes</h3>", unsafe_allow_html=True)
         
         st.metric("En horas", f"{int(df_filtered['horas_respuesta'].mean())}")
-        st.markdown("<div style='margin: 0.5rem 0;'></div>", unsafe_allow_html=True)
-        
+        st.markdown("<div style='margin: 0.2rem 0;'></div>", unsafe_allow_html=True)        
         st.metric("En minutos", f"{int(df_filtered['minutos_respuesta'].mean())}")
-        st.markdown("<div style='margin: 0.5rem 0;'></div>", unsafe_allow_html=True)
-        
+        st.markdown("<div style='margin: 0.2rem 0;'></div>", unsafe_allow_html=True)        
         # Calcular conversaciones pendientes correctamente
         # Dividir cada fila por sus duplicadas ANTES de sumar
         df_conversaciones = df_filtered[['conversaciones_pendientes', 'num_filas_duplicadas']].copy()
