@@ -43,11 +43,12 @@ st.markdown("""
     
     /* Reducir padding superior */
     .block-container {
-        padding-top: 1.5rem;
-        padding-bottom: 2rem;
+        padding-top: 0.5rem !important;
+        padding-bottom: 0.5rem !important;
         max-width: 1500px !important;
-        padding-left: 2rem !important;
-        padding-right: 2rem !important;
+        min-height: 750px !important;
+        padding-left: 1.5rem !important;
+        padding-right: 1.5rem !important;
     }
 
     /* --- MÉTRICAS CON SOMBRA --- */
@@ -55,9 +56,9 @@ st.markdown("""
         background-color: white !important;
         border: 1px solid #d0d0d0 !important;
         border-radius: 12px !important;
-        padding: 16px 12px !important;
+        padding: 12px 8px !important;
         text-align: center !important;
-        /* SOMBRA AGREGADA */
+        min-height: 90px !important;
         box-shadow: 0 4px 6px rgba(0,0,0,0.1) !important; 
     }
     
@@ -68,7 +69,7 @@ st.markdown("""
     }
     
     div[data-testid="stMetric"] div[data-testid="stMetricValue"] {
-        font-size: 38px !important;
+        font-size: 32px !important;
         font-weight: 400 !important;
         color: #333 !important;
     }
@@ -400,8 +401,8 @@ def plot_gauge(value, title):
     ))
     
     fig.update_layout(
-        height=140,
-        margin=dict(l=20, r=20, t=10, b=10),
+        height=110,
+        margin=dict(l=15, r=15, t=5, b=5),
         paper_bgcolor='white',
         plot_bgcolor='white',
         font={'family': "Arial, sans-serif"}
@@ -421,7 +422,7 @@ def plot_activity_timeline(profesores: list, tipo_actividad: str = 'Tarea', peri
             font=dict(size=16, color="#999")
         )
         fig.update_layout(
-            height=350,
+            height=280,
             margin=dict(l=40, r=20, t=30, b=40),
             paper_bgcolor='white',
             plot_bgcolor='white',
@@ -537,8 +538,7 @@ if 'initialized' not in st.session_state:
 # ==================== HEADER (MODIFICADO) ====================
 
 # Se eliminó el botón de aquí para moverlo a los filtros
-st.markdown("<h1 style='margin-bottom: 0;'>Reporte de estadísticas de app LBS+</h1>", unsafe_allow_html=True)
-st.markdown("<br>", unsafe_allow_html=True)
+st.markdown("<h1 style='margin-bottom: 0.5rem; font-size: 24px;'>Reporte de estadísticas de app LBS+</h1>", unsafe_allow_html=True)
 
 # ==================== FILTROS DINÁMICOS (CASCADA) + BOTÓN ====================
 
@@ -858,7 +858,7 @@ else:
             fit_columns_on_grid_load=True,
             theme='alpine',
             custom_css=custom_css,
-            height=280,
+            height=200,
             allow_unsafe_jscode=True,
             enable_enterprise_modules=False
         )
@@ -873,8 +873,7 @@ else:
             selected_from_table = [row['Profesor'] for row in selected_rows if 'Profesor' in row]
         
         # Botón - Centrado debajo de la tabla
-        st.markdown("<div style='margin-top: 12px;'></div>", unsafe_allow_html=True)
-        
+        st.markdown("<div style='margin: 0.3rem 0;'></div>", unsafe_allow_html=True)        
         if len(selected_from_table) > 0:
             col_info, col_btn = st.columns([2, 1])
             with col_info:
