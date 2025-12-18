@@ -1,19 +1,10 @@
-# Streamlit y componentes
 streamlit>=1.28.0
 streamlit-aggrid>=0.3.4
-
-# Procesamiento de datos
 pandas>=2.0.0
 numpy>=1.24.0
-db-dtypes>=1.0.0    <-- ¡ESTA ES LA QUE TE FALTA!
-pyarrow>=10.0.0     <-- Agrégala también por seguridad
-
-# Visualización
+db-dtypes>=1.0.0
+pyarrow>=10.0.0
 plotly>=5.17.0
-
-# BigQuery
 google-cloud-bigquery>=3.11.0
 google-auth>=2.23.0
-
-# Utilidades
 python-dateutil>=2.8.2
