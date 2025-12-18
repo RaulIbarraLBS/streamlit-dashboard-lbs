@@ -18,7 +18,7 @@ st.markdown("""
 
 /* === AJUSTE PARA IFRAME 1500x750 === */
 html {
-    zoom: 0.82; /* Reduce TODO al 82% */
+    zoom: 0.9; /* Reduce TODO al 82% */
 }
 
 body, .stApp {
@@ -42,7 +42,7 @@ body, .stApp {
         
         /* Escalar contenido para que quepa en 750px */
         .stApp {
-            transform: scale(0.85);
+            transform: scale(1.0);
             transform-origin: top center;
             height: 882px; /* 750 / 0.85 */
         }
@@ -791,7 +791,6 @@ else:
     
     with col_table:
         st.markdown("<h3 style='margin-bottom: 0.8rem;'>Lista de profesores</h3>", unsafe_allow_html=True)
-        st.caption("Selecciona uno o más profesores para ver sus actividades")
         
         # Preparar datos
         df_display = df_filtered.groupby(['profesor', 'campus']).agg({
